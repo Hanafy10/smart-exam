@@ -1,0 +1,42 @@
+# Virtual environments
+venv/
+env/
+.venv/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Model weights (use Git LFS instead)
+yolov8n.pt
+
+# Evidence / uploads
+evidence/
+*.jpg
+*.jpeg
+*.png
+
+# Git
+.git/
+.gitignore
+
+# Logs
+*.log
+
+# Test / temp
+*.tmp
+*.temp
+tmp/
+temp/
