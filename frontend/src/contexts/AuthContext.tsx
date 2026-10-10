@@ -12,7 +12,7 @@ interface AuthContextType {
   user: User | null;
   token: string | null;
   loading: boolean;
-  login: (username: string, password: string) => Promise<void>;
+  login: (username: string, password: string) => Promise<User>;
   logout: () => void;
 }
 
@@ -35,7 +35,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  // 2-hour refresh token lifecycle handler (adapted from ProjectAlpha)
   const handleTokenRefresh = useCallback(async (): Promise<string | null> => {
     const currentRefresh = typeof window !== 'undefined' ? localStorage.getItem('smartexam_refresh_token') : null;
     if (!currentRefresh) {
@@ -76,7 +75,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setLoading(false);
   }, [logout]);
 
-  const login = async (username: string, password: string) => {
+  const login = async (username: string, password: string): Promise<User> => {
     const data = await apiLogin(username, password);
     const userData = await getCurrentUser(data.access_token);
     setToken(data.access_token);
@@ -86,6 +85,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.setItem('smartexam_token', data.access_token);
     localStorage.setItem('smartexam_refresh_token', data.refresh_token);
     localStorage.setItem('smartexam_user', JSON.stringify(userData));
+    return userData;
   };
 
   return (

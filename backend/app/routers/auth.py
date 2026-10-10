@@ -19,7 +19,7 @@ from backend.app.core.security import (
     MAX_LOGIN_ATTEMPTS,
     LOCK_MINUTES,
 )
-from backend.app.models.models import User
+from backend.app.models.models import User, ExamRoom
 from backend.app.schemas.schemas import Token, LoginRequest, RefreshRequest, UserOut
 
 router = APIRouter(prefix="/api/auth", tags=["authentication"])
@@ -52,7 +52,6 @@ async def login(
         username = json_data.username
         password = json_data.password
     else:
-        # Fallback to reading JSON from request body if passed as raw json
         try:
             body = await request.json()
             username = body.get("username")
@@ -92,15 +91,25 @@ async def login(
             headers={"WWW-Authenticate": "Bearer"},
         )
 
+    if not user.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Account is deactivated. Please contact the administrator.",
+        )
+
     # Reset failed attempts upon successful login
     if user.failed_login_attempts or user.locked_until:
         user.failed_login_attempts = 0
         user.locked_until = None
 
-    access_token = create_access_token(subject=user.id)
+    role_str = user.role.value if hasattr(user.role, "value") else str(user.role)
+    access_token = create_access_token(
+        subject=user.id,
+        role=role_str,
+        assigned_room_id=user.assigned_room_id,
+    )
     refresh_token = create_refresh_token(subject=user.id)
 
-    # Store hashed refresh token in DB with 2-hour expiry
     user.refresh_token = get_password_hash(refresh_token)
     user.refresh_token_expires = now + timedelta(hours=REFRESH_TOKEN_EXPIRE_HOURS)
     db.add(user)
@@ -110,6 +119,8 @@ async def login(
         "access_token": access_token,
         "refresh_token": refresh_token,
         "token_type": "bearer",
+        "role": role_str,
+        "assigned_room_id": user.assigned_room_id,
     }
 
 @router.post("/refresh", response_model=Token)
@@ -131,13 +142,19 @@ async def refresh(payload: RefreshRequest, db: AsyncSession = Depends(get_db)):
 
     if (
         not user
+        or not user.is_active
         or not user.refresh_token
         or not verify_password(payload.refresh_token, user.refresh_token)
         or (user.refresh_token_expires and user.refresh_token_expires < now)
     ):
         raise HTTPException(status_code=401, detail="Invalid or expired refresh token")
 
-    access_token = create_access_token(subject=user.id)
+    role_str = user.role.value if hasattr(user.role, "value") else str(user.role)
+    access_token = create_access_token(
+        subject=user.id,
+        role=role_str,
+        assigned_room_id=user.assigned_room_id,
+    )
     new_refresh_token = create_refresh_token(subject=user.id)
 
     user.refresh_token = get_password_hash(new_refresh_token)
@@ -149,8 +166,25 @@ async def refresh(payload: RefreshRequest, db: AsyncSession = Depends(get_db)):
         "access_token": access_token,
         "refresh_token": new_refresh_token,
         "token_type": "bearer",
+        "role": role_str,
+        "assigned_room_id": user.assigned_room_id,
     }
 
 @router.get("/me", response_model=UserOut)
-async def me(user: User = Depends(get_current_user)):
-    return user
+async def me(user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    role_str = user.role.value if hasattr(user.role, "value") else str(user.role)
+    room_name = None
+    if user.assigned_room_id:
+        room = (await db.execute(select(ExamRoom).where(ExamRoom.id == user.assigned_room_id))).scalars().first()
+        if room:
+            room_name = room.name
+
+    return {
+        "id": user.id,
+        "username": user.username,
+        "email": user.email,
+        "role": role_str,
+        "is_active": user.is_active,
+        "assigned_room_id": user.assigned_room_id,
+        "assigned_room_name": room_name,
+    }

@@ -2,10 +2,13 @@ from datetime import datetime
 from typing import Optional, List, Any
 from pydantic import BaseModel, Field
 
+# Auth schemas
 class Token(BaseModel):
     access_token: str
     refresh_token: str
     token_type: str = "bearer"
+    role: str
+    assigned_room_id: Optional[int] = None
 
 class LoginRequest(BaseModel):
     username: str
@@ -19,12 +22,85 @@ class UserOut(BaseModel):
     username: str
     email: Optional[str] = None
     role: str
+    is_active: bool
+    assigned_room_id: Optional[int] = None
+    assigned_room_name: Optional[str] = None
 
     class Config:
         from_attributes = True
 
+# Admin invigilator management
+class InvigilatorCreate(BaseModel):
+    username: str = Field(..., min_length=3, max_length=50)
+    password: str = Field(..., min_length=6, max_length=128)
+    email: Optional[str] = None
+    assigned_room_id: int
+
+class InvigilatorUpdate(BaseModel):
+    is_active: Optional[bool] = None
+    assigned_room_id: Optional[int] = None
+    password: Optional[str] = None
+
+class InvigilatorOut(BaseModel):
+    id: int
+    username: str
+    email: Optional[str] = None
+    role: str
+    is_active: bool
+    assigned_room_id: Optional[int] = None
+    assigned_room_name: Optional[str] = None
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+# Exam Room schemas
+class ExamRoomCreate(BaseModel):
+    name: str = Field(..., min_length=2, max_length=100)
+    building: Optional[str] = None
+    capacity: Optional[int] = 30
+
+class CameraCreate(BaseModel):
+    name: str
+    device_index_or_url: str = "0"
+
+class CameraOut(BaseModel):
+    id: int
+    room_id: int
+    name: str
+    is_online: bool
+    last_seen: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+
+class ExamRoomOut(BaseModel):
+    id: int
+    name: str
+    building: Optional[str] = None
+    capacity: int
+    cameras: List[CameraOut] = []
+    invigilator_count: Optional[int] = 0
+
+    class Config:
+        from_attributes = True
+
+# Monitoring schemas (Assigned room only)
+class RoomMonitoringSummary(BaseModel):
+    room_id: int
+    room_name: str
+    building: Optional[str] = None
+    total_students: int
+    suspicious_students: int
+    total_violations: int
+    violence_detection_status: str = "unavailable"  # Honest status
+    camera_online: bool
+    is_paused: bool
+
 # Events from AI Pipeline
 class AIEventCreate(BaseModel):
+    room_id: int
+    camera_id: Optional[int] = None
     track_id: int
     event_type: str
     points: float
@@ -35,6 +111,8 @@ class AIEventCreate(BaseModel):
     zone_status: Optional[str] = "safe"
     presence_state: Optional[str] = "present"
     current_score: Optional[float] = None
+    is_violence: Optional[bool] = False
+    severity: Optional[str] = "medium"
 
 class AITrackState(BaseModel):
     track_id: int
@@ -47,15 +125,20 @@ class AITrackState(BaseModel):
     presence_state: str = "present"
 
 class AIStatusSync(BaseModel):
+    room_id: int
     live_student_count: int
     fps: int
     tracks: List[AITrackState] = []
 
 class ViolationEventOut(BaseModel):
     id: int
+    room_id: int
+    camera_id: Optional[int] = None
     track_id: Optional[int] = None
     event_type: str
     points: float
+    is_violence: bool = False
+    severity: str = "medium"
     evidence_url: Optional[str] = None
     timestamp: datetime
 
@@ -85,6 +168,7 @@ class StudentTrackOut(BaseModel):
 
 class ExamStatusOut(BaseModel):
     id: int
+    room_id: int
     title: str
     room_name: str
     status: str
@@ -97,9 +181,9 @@ class ExamStatusOut(BaseModel):
 class RobotStatusOut(BaseModel):
     device_code: str
     status: str
-    battery_level: float
-    current_zone: str
-    last_ping: datetime
+    battery_level: Optional[float] = None
+    current_zone: Optional[str] = None
+    last_ping: Optional[datetime] = None
 
     class Config:
         from_attributes = True

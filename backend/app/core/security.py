@@ -15,7 +15,7 @@ from backend.app.core.config import (
     REFRESH_TOKEN_EXPIRE_HOURS,
 )
 from backend.app.core.database import get_db
-from backend.app.models.models import User, UserRole
+from backend.app.models.models import User, UserRole, ExamRoom
 
 MAX_LOGIN_ATTEMPTS = 5
 LOCK_MINUTES = 15
@@ -38,27 +38,25 @@ def _check_rate_limit(key: str, limit: int = 10, window_minutes: int = 1) -> boo
     return True
 
 def validate_password_strength(password: str) -> None:
-    if len(password) < 12:
-        raise ValueError("Password must be at least 12 characters")
-    if not any(c.isupper() for c in password):
-        raise ValueError("Password must contain at least one uppercase letter")
-    if not any(c.islower() for c in password):
-        raise ValueError("Password must contain at least one lowercase letter")
-    if not any(c.isdigit() for c in password):
-        raise ValueError("Password must contain at least one number")
-    if not any(c in "!@#$%^&*()_+-=[]{}|;:,.<>?/~`" for c in password):
-        raise ValueError("Password must contain at least one special character")
+    if len(password) < 6:
+        raise ValueError("Password must be at least 6 characters")
 
-def create_access_token(subject: Union[str, Any], expires_delta: Optional[timedelta] = None) -> str:
+def create_access_token(subject: Union[str, Any], role: str, assigned_room_id: Optional[int] = None, expires_delta: Optional[timedelta] = None) -> str:
     if expires_delta:
         expire = datetime.now(timezone.utc) + expires_delta
     else:
         expire = datetime.now(timezone.utc) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-    to_encode = {"exp": expire, "sub": str(subject), "type": "access"}
+    to_encode = {
+        "exp": expire,
+        "sub": str(subject),
+        "role": role,
+        "assigned_room_id": assigned_room_id,
+        "type": "access",
+    }
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
 def create_refresh_token(subject: Union[str, Any]) -> str:
-    # Set to 2 hours per user requirement
+    # 2 hours per requirement
     expire = datetime.now(timezone.utc) + timedelta(hours=REFRESH_TOKEN_EXPIRE_HOURS)
     to_encode = {"exp": expire, "sub": str(subject), "type": "refresh"}
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
@@ -93,7 +91,52 @@ async def get_current_user(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Session user no longer exists",
         )
+    if not user.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Account has been deactivated",
+        )
     return user
+
+async def require_admin(user: User = Depends(get_current_user)) -> User:
+    if user.role != UserRole.ADMIN:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Admin permissions required",
+        )
+    return user
+
+async def require_invigilator(user: User = Depends(get_current_user)) -> User:
+    if user.role != UserRole.INVIGILATOR:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Invigilator permissions required",
+        )
+    return user
+
+async def get_assigned_room(
+    user: User = Depends(require_invigilator), db: AsyncSession = Depends(get_db)
+) -> ExamRoom:
+    """
+    Retrieves the invigilator's assigned room from trusted database state.
+    Raises 403 Forbidden with 'No exam room assigned' if unassigned or invalid.
+    """
+    if user.assigned_room_id is None:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="No exam room assigned",
+        )
+    
+    room = (
+        await db.execute(select(ExamRoom).where(ExamRoom.id == user.assigned_room_id))
+    ).scalars().first()
+
+    if not room:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="No exam room assigned",
+        )
+    return room
 
 def _client_ip(request: Request) -> Optional[str]:
     forwarded = request.headers.get("x-forwarded-for")

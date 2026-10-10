@@ -1,3 +1,4 @@
+import os
 import time
 import base64
 import requests
@@ -6,14 +7,35 @@ from typing import Optional
 
 class EventGenerator:
     """
-    Dispatches violation events and periodic status heartbeats
-    from the AI Pipeline to the Backend FastAPI server via HTTP POST.
+    Dispatches violation events, live frames, and periodic status heartbeats
+    from the AI Pipeline to the Backend FastAPI server via room-scoped HTTP POST endpoints.
     """
-    def __init__(self, backend_url: str = "http://localhost:8000"):
+    def __init__(self, backend_url: str = "http://localhost:8000", room_id: Optional[int] = None):
         self.backend_url = backend_url.rstrip("/")
-        self.events_endpoint = f"{self.backend_url}/api/events/ai"
-        self.sync_endpoint = f"{self.backend_url}/api/events/sync"
+        self.room_id = room_id if room_id is not None else int(os.environ.get("ROOM_ID", "1"))
+        self.events_endpoint = f"{self.backend_url}/api/monitoring/ai/event"
+        self.sync_endpoint = f"{self.backend_url}/api/monitoring/ai/sync"
+        self.frame_endpoint = f"{self.backend_url}/api/monitoring/ai/frame?room_id={self.room_id}"
         self.last_sync_time = 0.0
+        self.last_frame_time = 0.0
+
+    def push_frame(self, frame) -> bool:
+        """
+        Sends current frame to backend MJPEG stream buffer at ~10-15 fps.
+        """
+        now = time.time()
+        if now - self.last_frame_time < 0.07:
+            return False
+        self.last_frame_time = now
+
+        try:
+            ret, buffer = cv2.imencode(".jpg", frame, [cv2.IMWRITE_JPEG_QUALITY, 70])
+            if ret:
+                resp = requests.post(self.frame_endpoint, data=buffer.tobytes(), timeout=0.5)
+                return resp.status_code == 200
+        except Exception:
+            pass
+        return False
 
     def send_violation(
         self,
@@ -27,6 +49,8 @@ class EventGenerator:
         zone_status: str = "safe",
         presence_state: str = "present",
         current_score: Optional[float] = None,
+        severity: str = "medium",
+        is_violence: bool = False,
     ) -> bool:
         """
         Sends an alert event to the backend. Encodes the current frame as base64 JPEG evidence.
@@ -41,6 +65,7 @@ class EventGenerator:
                 print(f"[EventGenerator] Failed to encode frame evidence: {e}")
 
         payload = {
+            "room_id": self.room_id,
             "track_id": track_id,
             "event_type": event_type,
             "points": points,
@@ -51,13 +76,14 @@ class EventGenerator:
             "zone_status": zone_status,
             "presence_state": presence_state,
             "current_score": current_score,
+            "severity": severity,
+            "is_violence": is_violence,
         }
 
         try:
             resp = requests.post(self.events_endpoint, json=payload, timeout=2.0)
             return resp.status_code == 201
         except Exception as e:
-            # Non-blocking log if backend server is temporarily unreachable
             print(f"[EventGenerator] Warning: Could not post event to backend: {e}")
             return False
 
@@ -71,6 +97,7 @@ class EventGenerator:
         self.last_sync_time = now
 
         payload = {
+            "room_id": self.room_id,
             "live_student_count": live_student_count,
             "fps": fps,
             "tracks": tracks,

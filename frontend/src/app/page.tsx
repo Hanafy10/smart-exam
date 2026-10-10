@@ -9,10 +9,12 @@ export default function Home() {
 
   useEffect(() => {
     if (!loading) {
-      if (user) {
-        router.push('/dashboard');
-      } else {
+      if (!user) {
         router.push('/login');
+      } else if (user.role === 'admin') {
+        router.push('/admin');
+      } else {
+        router.push('/monitoring');
       }
     }
   }, [user, loading, router]);

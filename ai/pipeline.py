@@ -283,19 +283,24 @@ def run_pipeline(display_gui: bool = DISPLAY_GUI):
             # Send periodic telemetry heartbeat to backend
             event_gen.sync_status(live_student_count=live_count, fps=current_fps, tracks=track_sync_list)
 
-            if display_gui:
-                display = frame.copy()
-                for p in people_with_pose:
-                    tid = p["id"]
-                    x1, y1, x2, y2 = p["bbox"]
-                    rec = scoring_engine.get_record(tid)
-                    color = (0, 0, 255) if rec.score >= 10 else (0, 255, 0)
-                    cv2.rectangle(display, (x1, y1), (x2, y2), color, 2)
-                    cv2.putText(display, f"ID {tid} | {rec.score:.0f}pts", (x1, y1 - 10),
-                                cv2.FONT_HERSHEY_SIMPLEX, 0.6, color, 2)
+            # Render annotated frame with student boxes and metrics
+            display = frame.copy()
+            for p in people_with_pose:
+                tid = p["id"]
+                x1, y1, x2, y2 = p["bbox"]
+                rec = scoring_engine.get_record(tid)
+                color = (0, 0, 255) if rec.score >= 10 else (0, 255, 0)
+                cv2.rectangle(display, (x1, y1), (x2, y2), color, 2)
+                cv2.putText(display, f"ID {tid} | {rec.score:.0f}pts", (x1, y1 - 10),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.6, color, 2)
 
-                cv2.putText(display, f"FPS: {current_fps} | Students: {live_count}",
-                            (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
+            cv2.putText(display, f"FPS: {current_fps} | Students: {live_count}",
+                        (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
+
+            # Stream annotated frame to backend video feed buffer
+            event_gen.push_frame(display)
+
+            if display_gui:
                 cv2.imshow("Smart Exam - AI Pipeline (q to quit)", display)
                 if cv2.waitKey(1) & 0xFF == ord("q"):
                     break

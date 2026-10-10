@@ -1,4 +1,4 @@
-import { User } from './types';
+import { User, ExamRoom, Invigilator, RoomMonitoringSummary, ViolationEvent } from './types';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
@@ -25,7 +25,6 @@ export async function apiRequest(endpoint: string, options: RequestInit = {}) {
     headers,
   });
 
-  // Automatic token refresh on 401 if refresh handler is registered
   if (response.status === 401 && refreshHandler) {
     const newToken = await refreshHandler();
     if (newToken) {
@@ -40,6 +39,7 @@ export async function apiRequest(endpoint: string, options: RequestInit = {}) {
   return response;
 }
 
+// Auth endpoints
 export async function login(username: string, password: string) {
   const res = await fetch(`${API_BASE}/api/auth/login`, {
     method: 'POST',
@@ -72,10 +72,111 @@ export async function getCurrentUser(token?: string): Promise<User> {
   return res.json();
 }
 
-export async function getExamStatus() {
-  const res = await apiRequest('/api/exams/status');
-  if (!res.ok) throw new Error('Failed to load exam status');
+// Admin endpoints (REST only - No WebSockets)
+export async function getAdminRooms(): Promise<ExamRoom[]> {
+  const res = await apiRequest('/api/admin/rooms');
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || 'Failed to load exam rooms');
+  }
   return res.json();
+}
+
+export async function createAdminRoom(data: { name: string; building?: string; capacity?: number }): Promise<ExamRoom> {
+  const res = await apiRequest('/api/admin/rooms', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || 'Failed to create exam room');
+  }
+  return res.json();
+}
+
+export async function getAdminInvigilators(): Promise<Invigilator[]> {
+  const res = await apiRequest('/api/admin/invigilators');
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || 'Failed to load invigilators');
+  }
+  return res.json();
+}
+
+export async function createAdminInvigilator(data: {
+  username: string;
+  password: string;
+  email?: string;
+  assigned_room_id: number;
+}): Promise<Invigilator> {
+  const res = await apiRequest('/api/admin/invigilators', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || 'Failed to create invigilator');
+  }
+  return res.json();
+}
+
+export async function updateAdminInvigilator(
+  id: number,
+  data: { is_active?: boolean; assigned_room_id?: number; password?: string }
+): Promise<Invigilator> {
+  const res = await apiRequest(`/api/admin/invigilators/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || 'Failed to update invigilator');
+  }
+  return res.json();
+}
+
+export async function deleteAdminInvigilator(id: number): Promise<void> {
+  const res = await apiRequest(`/api/admin/invigilators/${id}`, {
+    method: 'DELETE',
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || 'Failed to delete invigilator');
+  }
+}
+
+// Monitoring endpoints (Strictly room-scoped for assigned invigilator)
+export async function getMyRoom(): Promise<ExamRoom> {
+  const res = await apiRequest('/api/monitoring/my-room');
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || 'Failed to load assigned room');
+  }
+  return res.json();
+}
+
+export async function getMyRoomSummary(): Promise<RoomMonitoringSummary> {
+  const res = await apiRequest('/api/monitoring/summary');
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || 'Failed to load room monitoring summary');
+  }
+  return res.json();
+}
+
+export async function getMyRoomEvents(limit = 50): Promise<ViolationEvent[]> {
+  const res = await apiRequest(`/api/monitoring/events?limit=${limit}`);
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || 'Failed to load room events');
+  }
+  return res.json();
+}
+
+export function getVideoFeedUrl(token?: string | null): string {
+  const base = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+  if (!token) return `${base}/api/monitoring/video-feed`;
+  return `${base}/api/monitoring/video-feed?token=${encodeURIComponent(token)}`;
 }
 
 export async function pauseExam(reason = 'Proctor paused exam') {
@@ -89,39 +190,5 @@ export async function pauseExam(reason = 'Proctor paused exam') {
 export async function resumeExam() {
   const res = await apiRequest('/api/exams/resume', { method: 'POST' });
   if (!res.ok) throw new Error('Failed to resume exam');
-  return res.json();
-}
-
-export async function getStudents() {
-  const res = await apiRequest('/api/exams/students');
-  if (!res.ok) throw new Error('Failed to load students');
-  return res.json();
-}
-
-export async function assignStudent(trackId: number, studentCollegeId: string, studentName: string) {
-  const res = await apiRequest('/api/exams/assign-student', {
-    method: 'POST',
-    body: JSON.stringify({
-      track_id: trackId,
-      student_college_id: studentCollegeId,
-      student_name: studentName,
-    }),
-  });
-  if (!res.ok) throw new Error('Failed to assign student');
-  return res.json();
-}
-
-export async function getRobotStatus() {
-  const res = await apiRequest('/api/robot/status');
-  if (!res.ok) throw new Error('Failed to load robot status');
-  return res.json();
-}
-
-export async function dispatchRobot(targetTrackId: number, reason: string) {
-  const res = await apiRequest('/api/robot/dispatch', {
-    method: 'POST',
-    body: JSON.stringify({ target_track_id: targetTrackId, reason }),
-  });
-  if (!res.ok) throw new Error('Failed to dispatch robot');
   return res.json();
 }

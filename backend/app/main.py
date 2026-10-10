@@ -6,20 +6,20 @@ from fastapi.staticfiles import StaticFiles
 
 from backend.app.core.config import EVIDENCE_DIR
 from backend.app.core.database import init_db
-from backend.app.routers import auth, events, exams, robot, ws
+from backend.app.routers import auth, admin, monitoring, events, exams, robot, ws
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Initialize DB tables
     await init_db()
-    # Run seed to ensure default admin exists
+    # Run seed to ensure default admin and default room exist
     from backend.seed import seed_default_admin
     await seed_default_admin()
     yield
 
 app = FastAPI(
     title="Smart Exam Proctoring API",
-    description="Backend Server for AI-assisted Exam Proctoring with ProjectAlpha JWT and Real-time WebSockets",
+    description="Backend Server for AI-assisted Exam Proctoring with Role-Based Access Control and Real-time WebSockets",
     version="2.0.0",
     lifespan=lifespan,
 )
@@ -35,6 +35,8 @@ app.add_middleware(
 
 # Register routers
 app.include_router(auth.router)
+app.include_router(admin.router)
+app.include_router(monitoring.router)
 app.include_router(events.router)
 app.include_router(exams.router)
 app.include_router(robot.router)
