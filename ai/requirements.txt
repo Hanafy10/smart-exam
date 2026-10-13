@@ -1,5 +1,5 @@
 opencv-contrib-python>=4.10.0.84
-mediapipe>=0.10.21
+mediapipe==0.10.21
 numpy>=1.26.4,<2.0
 ultralytics>=8.3.0
 requests>=2.31.0

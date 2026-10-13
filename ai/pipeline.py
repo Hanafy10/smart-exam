@@ -12,7 +12,7 @@ import time
 import cv2
 import numpy as np
 
-from ai.camera_capture import CameraCapture, list_available_cameras
+from ai.camera_capture import CameraCapture
 from ai.face_detector import FaceDetector, HeadPoseEstimator
 from ai.eye_gaze import EyeGazeEstimator
 from ai.person_detector import PersonDetector, PoseEstimator
@@ -116,7 +116,7 @@ def run_pipeline(display_gui: bool = DISPLAY_GUI):
     last_event_counts: dict[int, int] = {}
     fps_counter, fps_timer, current_fps, frame_count = 0, time.time(), 0, 0
 
-    with CameraCapture(camera_index=CAMERA_INDEX) as camera:
+    with CameraCapture() as camera:
         print("[AI Pipeline] Camera successfully opened. Processing frames...")
 
         while True:
