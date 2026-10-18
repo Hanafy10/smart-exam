@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>MUST Smart Exam</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&display=swap">
+<style>
+:root{--navy:#202f6a;--navy2:#2c3f8f;--red:#2f8a49;--gr:#4da964;--btn:#202f6a;--btnt:#fff;--hf:"Barlow Condensed","Arial Narrow",Impact,sans-serif;--bg:#f3f5f9;--card:#fff;--bd:#dde3ee;--tx:#14213d;--mu:#64718a;--ok:#16a34a;--wn:#d97706;--dg:#dc2626;--okb:#dcfce7;--wnb:#fef3c7;--dgb:#fee2e2;--side:#202f6a;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#0b1322;--card:#13203a;--bd:#25375a;--tx:#e8edf7;--mu:#93a3c0;--okb:#0f3a24;--wnb:#47310a;--dgb:#4a1414;--side:#101a3f;--btn:#4da964;--btnt:#0b1322}}
+:root[data-theme=dark]{--bg:#0b1322;--card:#13203a;--bd:#25375a;--tx:#e8edf7;--mu:#93a3c0;--okb:#0f3a24;--wnb:#47310a;--dgb:#4a1414;--side:#101a3f;--btn:#4da964;--btnt:#0b1322}
+*{box-sizing:border-box;margin:0}html,body{height:100%}
+body{font-family:"Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif;background:var(--bg);color:var(--tx);font-size:14px}
+button{font:inherit;cursor:pointer}
+#login{min-height:100%;display:grid;grid-template-columns:1.1fr 1fr}
+.hero{background:var(--navy);color:#fff;padding:48px;display:flex;flex-direction:column;justify-content:space-between}
+.hero h1{font-family:var(--hf);font-size:52px;line-height:1.05;margin:18px 0 10px;text-transform:uppercase}.hero h1 em{font-style:normal;color:var(--gr)}.hero .lg{width:96px;height:96px;background:#fff;border-radius:50%;padding:4px}.hero p{opacity:.8;max-width:420px}
+.logo{display:flex;align-items:center;gap:10px;font-weight:800;letter-spacing:.04em}
+.logo img{width:44px;height:44px;background:#fff;border-radius:50%;padding:2px}.hero .logo img{width:84px;height:84px}.logo{font-family:var(--hf);font-size:17px;text-transform:uppercase}
+.lw{display:grid;place-items:center;padding:24px}
+.lb{width:100%;max-width:380px;background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:28px;box-shadow:0 8px 28px rgba(15,42,82,.12)}
+.lb h2{margin-bottom:4px}.lb small{color:var(--mu)}
+.roles{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:16px 0}
+.roles button{padding:12px;border:1px solid var(--bd);background:var(--bg);border-radius:10px;color:var(--tx);font-weight:600}
+.roles button.on{border-color:var(--gr);box-shadow:inset 0 0 0 2px var(--gr)}.lb h2,.top h1,.c h3,.k b,.nav,.btn,th{font-family:var(--hf)}.lb h2{font-size:28px;color:var(--btn)}.lb h2,.top h1{text-transform:uppercase;letter-spacing:.02em}
+label{display:block;font-size:12px;color:var(--mu);margin:10px 0 4px}
+input,select{width:100%;padding:10px;border:1px solid var(--bd);border-radius:8px;background:var(--card);color:var(--tx);font:inherit}
+.btn{background:var(--btn);color:var(--btnt);border:0;padding:10px 16px;border-radius:8px;font-weight:700}
+.btn.s{background:var(--bg);color:var(--tx);border:1px solid var(--bd)}.btn.w{width:100%;margin-top:16px}
+#app{display:grid;height:100%;grid-template-columns:230px 1fr}
+aside{background:var(--side);color:#cbd5e8;padding:16px 10px;display:flex;flex-direction:column;gap:2px;overflow:auto}
+aside .logo{color:#fff;padding:4px 8px 14px;border-bottom:1px solid rgba(255,255,255,.12);margin-bottom:10px}
+aside small{display:block;font-weight:400;font-size:11px;opacity:.7;letter-spacing:0}
+.nav{background:none;border:0;color:inherit;text-align:left;padding:10px 12px;border-radius:8px;font-weight:600;border-left:3px solid transparent}
+.nav:hover{background:rgba(255,255,255,.08)}.nav.on{background:rgba(255,255,255,.12);color:var(--gr);border-left-color:var(--gr)}.nav{font-size:16px;letter-spacing:.03em;text-transform:uppercase}
+.out{margin-top:auto}
+main{display:flex;flex-direction:column;min-width:0;height:100%}
+.top{display:flex;align-items:center;gap:12px;padding:12px 24px;background:var(--navy);color:#fff;border-bottom:3px solid var(--gr)}.top input{background:rgba(255,255,255,.12);color:#fff;border-color:rgba(255,255,255,.25)}.top input::placeholder{color:#cdd6f0}.top .btn.s{background:transparent;color:#fff;border-color:rgba(255,255,255,.35)}
+.top h1{font-size:26px}.crumb{font-size:12px;color:#cdd6f0}.crumb b{color:var(--gr);margin:0 6px}
+.top input{max-width:220px}
+.user{display:flex;align-items:center;gap:8px;font-weight:600}.av{width:32px;height:32px;border-radius:50%;background:var(--navy2);color:#fff;display:grid;place-items:center;font-size:12px}
+#view{padding:24px;overflow:auto;flex:1}
+.g{display:grid;gap:16px}.g4{grid-template-columns:repeat(auto-fit,minmax(170px,1fr))}.g2{grid-template-columns:1.6fr 1fr}
+.c{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:16px;box-shadow:0 1px 3px rgba(15,42,82,.06);min-width:0}
+.c h3{font-size:15px;color:var(--mu);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center}
+.k b{font-size:34px;display:block;color:var(--navy2)}.k span{color:var(--mu);font-size:12px}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]) .k b{color:#8fb4ff}}
+:root[data-theme=dark] .k b{color:#8fb4ff}
+.tag{display:inline-block;padding:2px 9px;border-radius:99px;font-size:11px;font-weight:700}
+.t-ok{background:var(--okb);color:var(--ok)}.t-wn{background:var(--wnb);color:var(--wn)}.t-dg{background:var(--dgb);color:var(--dg)}.t-mu{background:var(--bg);color:var(--mu)}
+.tw{overflow-x:auto}table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:9px 8px;border-bottom:1px solid var(--bd);white-space:nowrap}th{font-size:11px;color:var(--mu);text-transform:uppercase}
+.cam{aspect-ratio:16/9;background:#050a14;border-radius:10px;position:relative;overflow:hidden;display:grid;place-items:center;color:#9fb0cf}
+.cam img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.cam .b{position:absolute;top:10px;left:10px;z-index:2}
+.note{background:var(--wnb);color:var(--wn);padding:10px 12px;border-radius:8px;font-size:12px;margin-bottom:14px}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px}.row input,.row select{width:auto}
+.bar{height:8px;background:var(--bg);border-radius:9px;overflow:hidden}.bar i{display:block;height:100%;background:var(--navy2)}
+.al{display:flex;gap:10px;padding:10px 0;border-bottom:1px solid var(--bd);align-items:center}.al:last-child{border:0}.al div{flex:1}.al small{color:var(--mu)}
+.seat{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}.seat div{padding:10px 4px;text-align:center;border-radius:8px;font-size:11px;font-weight:700}
+.cols{display:flex;gap:8px;align-items:flex-end;height:120px}.cols i{flex:1;background:var(--navy2);border-radius:5px 5px 0 0;position:relative}.cols i:nth-child(3n){background:var(--gr)}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;place-items:center;z-index:9}.modal.on{display:grid}.modal .c{max-width:380px}
+@media(max-width:900px){
+#login{grid-template-columns:1fr}.hero{display:none}#app{grid-template-columns:70px 1fr}aside .logo small,.nav span{display:none}.nav{padding:10px 6px;text-align:center}.g2{grid-template-columns:1fr}.top input{display:none}}
+.emp{color:var(--mu);padding:20px;text-align:center}.seat{min-height:40px}.btn:disabled{opacity:.45;cursor:not-allowed}a.btn{display:inline-block}
+.err{background:var(--dgb);color:var(--dg);padding:9px 12px;border-radius:8px;font-size:13px;margin-bottom:8px}
+</style></head><body>
+<div id="login"><div class="hero"><div class="logo"><img class="lg" alt="MUST" src="/static/must_logo.webp"><span>Misr University<br>for Science &amp; Technology</span></div>
+<div><h1>Smart Exam<br><em>Monitoring</em> System</h1><p>AI-assisted exam supervision with cameras and a monitoring robot. Alerts are suspicions for human review — never automatic decisions.</p></div>
+<small style="opacity:.6">Graduation project · College of Information Technology</small></div>
+<div class="lw"><form class="lb" method="post"><h2>Sign in</h2><small>Doctors and administrators</small>
+{% if error %}<div class="err" role="alert">{{ error }}</div>{% endif %}
+<label for="u">Username</label><input id="u" name="username" autocomplete="username" required autofocus>
+<label for="p">Password</label><input id="p" name="password" type="password" autocomplete="current-password" required>
+<button class="btn w" type="submit">Sign in</button></form></div></div></body></html>

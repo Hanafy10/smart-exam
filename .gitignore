@@ -3,4 +3,16 @@ yolov8n.pt
 .DS_Store
 .ipynb_checkpoints
 _probe*
-evidence/
+evidence/*.jpg
+*.jpeg
+*.jpg
+# Ignore all image files
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.webp
+*.svg
+*.ico
+*.bmp
+*.heic

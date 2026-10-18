@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MUST Smart Exam — Class Monitor</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&display=swap">
+<style>
+:root{
+  --bg:#0f1a45;
+  --panel:#202f6a;
+  --panel-hover:#2c3f8f;
+  --border:#3a4d96;
+  --text:#eef2f7;
+  --muted:#94a3b8;
+  --accent:#4da964;
+  --accent-hover:#3a9a55;
+  --success:#22c55e;
+  --warning:#f59e0b;
+  --danger:#ef4444;
+}
+* { margin:0; padding:0; box-sizing:border-box }
+html, body { height:100% }
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;background:var(--bg);color:var(--text);padding:20px;line-height:1.5}
+a{color:var(--accent);text-decoration:none}
+h1{font-size:20px;letter-spacing:.02em;font-family:"Barlow Condensed","Arial Narrow",Impact,sans-serif;text-transform:uppercase}
+h2{font-size:13px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:10px;font-weight:700}
+
+/* ---------- header ---------- */
+.header{border-bottom:3px solid #4da964;display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid var(--border);flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:10px}
+.brand .mark{width:44px;height:44px;border-radius:50%;background:#fff;padding:2px}
+.brand h1{font-size:24px;margin:0;font-family:"Barlow Condensed","Arial Narrow",Impact,sans-serif;text-transform:uppercase}
+.subtitle{font-size:12px;color:var(--muted);margin-top:2px}
+
+/* ---------- status bar ---------- */
+.status-bar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:16px}
+.pill{padding:6px 14px;border-radius:999px;font-size:12px;font-weight:800;background:var(--panel);border:1px solid var(--border);color:var(--muted)}
+.pill.running{background:#064e3b;border-color:#065f46;color:#86efac}
+.pill.paused{background:#7f1d1d;border-color:#991b1b;color:#fecaca}
+.badge-count{padding:6px 14px;border-radius:999px;font-size:12px;font-weight:800;background:var(--panel);border:1px solid var(--border);color:var(--accent)}
+.fps{padding:6px 12px;border-radius:8px;font-size:12px;font-weight:800;background:var(--panel);border:1px solid var(--border);color:var(--muted)}
+.setup-banner{background:#2c3f8f;color:#dbeafe;padding:8px 14px;border-radius:8px;font-size:13px;font-weight:600;display:none;margin-left:auto;white-space:nowrap}
+
+/* ---------- alert ---------- */
+.alert-banner{display:none;background:#7f1d1d;color:#fecaca;padding:10px 16px;border-radius:8px;font-size:13px;font-weight:600;margin-bottom:14px;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.alert-banner.show{display:flex}
+.alert-banner .resume-inline{background:#fff;color:#7f1d1d;border:none;padding:7px 16px;border-radius:6px;font-weight:800;font-size:12px;cursor:pointer;flex-shrink:0}
+.alert-banner .resume-inline:hover{background:#fee2e2}
+
+/* ---------- panels ---------- */
+.panel{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:16px}
+.panel h2{font-size:13px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:12px;font-weight:700}
+
+/* ---------- controls ---------- */
+.controls{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
+.btn{border:none;padding:8px 18px;border-radius:10px;font-size:13px;font-weight:800;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+.btn:active{transform:translateY(1px)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn-pause{background:var(--warning);color:#1c1917}
+.btn-pause:hover:not(:disabled){background:#d97706}
+.btn-resume{background:var(--success);color:#06210f}
+.btn-resume:hover:not(:disabled){background:#16a34a}
+.btn-accent{background:var(--accent);color:#fff}
+.btn-accent:hover:not(:disabled){background:var(--accent-hover)}
+
+/* ---------- camera ---------- */
+.cam-wrap{position:relative;border-radius:12px;overflow:hidden;background:#000;border:1px solid var(--border);aspect-ratio:16/9;width:100%}
+.video-feed{width:100%;height:100%;display:block;background:#000;object-fit:cover}
+
+/* ---------- student cards ---------- */
+.students-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px}
+.empty{grid-column:1/-1;color:var(--muted);text-align:center;padding:30px;font-size:13px}
+.student-card{background:#0b1120;border:1px solid var(--border);border-radius:12px;padding:12px;display:flex;gap:12px;align-items:center}
+.scard-avatar{width:40px;height:40px;border-radius:50%;background:var(--accent);display:grid;place-items:center;color:#fff;font-weight:900;font-size:14px;flex-shrink:0}
+.scard-info{flex:1;min-width:0}
+.scard-name{font-size:15px;font-weight:800;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.scard-id{font-size:11px;color:var(--muted);margin-top:2px}
+.scard-status{font-size:11px;font-weight:800;padding:3px 10px;border-radius:999px;background:rgba(34,197,94,.15);color:#86efac;white-space:nowrap}
+.scard-status.warning{background:rgba(245,158,11,.15);color:#fcd34d}
+.scard-status.danger{background:rgba(239,68,68,.15);color:#fca5a5}
+.scard-meta{font-size:11px;color:var(--muted);margin-top:6px}
+@media (max-width: 640px){body{padding:12px}.students-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="brand">
+    <img class="mark" src="/static/must_logo.webp" alt="MUST">
+    <div>
+      <h1>MUST Smart Exam — Class Monitor</h1>
+      <div class="subtitle">Live camera &amp; student roster</div>
+    </div>
+  </div>
+  <div class="status-bar">
+    <span class="pill running" id="statusPill">RUNNING</span>
+    <span class="badge-count" id="countBadge">Students: 0</span>
+    <span class="fps" id="fpsBadge">FPS: —</span>
+    <div class="setup-banner" id="setupBanner">
+      Setting up desk zones… <span id="setupProgress">0/30</span> — keep students seated still.
+    </div>
+  </div>
+</div>
+
+<!-- Alert banner (count-change / pause) -->
+<div class="alert-banner" id="alertBanner">
+  <span id="alertText"></span>
+  <button class="resume-inline" onclick="resumeExam()">Resume</button>
+</div>
+
+<!-- Controls -->
+<div class="controls">
+  <button class="btn btn-pause" id="pauseBtn" onclick="pauseExam()">&#9208; Pause AI</button>
+  <button class="btn btn-resume" id="resumeBtn" onclick="resumeExam()">&#9654; Resume</button>
+  <button class="btn btn-accent" onclick="location.reload()">Refresh</button>
+</div>
+
+<!-- Camera panel -->
+<div class="panel">
+  <h2>Live Camera</h2>
+  <div class="cam-wrap">
+    <img class="video-feed" id="camStable" src="/video_feed" alt="Class camera" style="display:block">
+  </div>
+</div>
+
+<!-- Students panel -->
+<div class="panel">
+  <h2>Students in Class</h2>
+  <div id="studentsGrid" class="students-grid">
+    <div class="empty">No students detected yet&#8230;</div>
+  </div>
+</div>
+
+<script>
+function escapeHtml(s){return String(s===""?"":s).replace(/[&<>"']/g,c=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]))}
+function statusPillState(paused){
+  const p=document.getElementById('statusPill');
+  if(paused){p.textContent='PAUSED';p.className='pill paused';}
+  else{p.textContent='RUNNING';p.className='pill running';}
+}
+function renderTrack(r){
+  const suspicious=r.is_suspicious;
+  const warn=!suspicious&&r.score>0;
+  const cls=suspicious?'danger':(warn?'warning':'');
+  const label=suspicious?'Suspected':(warn?'Watch':'Normal');
+  return `
+    <div class="student-card">
+      <div class="scard-avatar">${r.student_id.charAt(0).toUpperCase()}</div>
+      <div class="scard-info">
+        <div class="scard-name">${escapeHtml(r.name)}</div>
+        <div class="scard-id">ID: ${escapeHtml(r.student_id)} &#8226; Track #${r.track_id}</div>
+        <div class="scard-status ${cls}">${label}</div>
+        <div class="scard-meta">Score ${r.score} &#8226; ${r.presence_state.replace(/_/g,' ')}</div>
+      </div>
+    </div>`;
+}
+function refresh(){
+  fetch('/api/status').then(r=>r.json()).then(data=>{
+    const fps=data.fps??0;
+    const fpsEl=document.getElementById('fpsBadge');
+    fpsEl.textContent='FPS: '+fps;
+    fpsEl.style.color=fps>=15?'#4ade80':fps>=8?'#fb923c':'#f87171';
+    document.getElementById('countBadge').textContent='Students: '+(data.live_count??0);
+    const banner=document.getElementById('setupBanner');
+    if(!data.is_setup_complete){banner.style.display='block';document.getElementById('setupProgress').textContent=data.setup_progress[0]+'/'+data.setup_progress[1];}
+    else{banner.style.display='none';}
+    const ec=data.exam_control||{};
+    statusPillState(ec.paused);
+    const pb=document.getElementById('pauseBtn');const rb=document.getElementById('resumeBtn');
+    const ab=document.getElementById('alertBanner');const at=document.getElementById('alertText');
+    if(ec.paused){pb.disabled=true;rb.disabled=false;at.textContent=ec.alert_message||'Exam paused.';ab.classList.add('show');}
+    else{pb.disabled=false;rb.disabled=true;ab.classList.remove('show');}
+    const grid=document.getElementById('studentsGrid');
+    if(!data.tracks||data.tracks.length===0){grid.innerHTML='<div class="empty">No students detected yet&#8230;</div>';}
+    else{grid.innerHTML=data.tracks.map(renderTrack).join('');}
+  }).catch(e=>console.error(e));
+}
+refresh();setInterval(refresh,1000);
+function pauseExam(){fetch('/api/pause',{method:'POST'}).then(r=>r.json()).then(d=>{statusPillState(true);document.getElementById('alertText').textContent=d.alert_message||'Exam paused.';document.getElementById('alertBanner').classList.add('show');document.getElementById('pauseBtn').disabled=true;document.getElementById('resumeBtn').disabled=false;});}
+function resumeExam(){fetch('/api/resume',{method:'POST'}).then(r=>r.json()).then(d=>{statusPillState(false);document.getElementById('alertBanner').classList.remove('show');document.getElementById('pauseBtn').disabled=false;document.getElementById('resumeBtn').disabled=true;});}
+</script>
+</body>
+</html>

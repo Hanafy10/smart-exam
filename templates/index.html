@@ -2,220 +2,266 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Smart Exam Proctoring — Dashboard</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Smart Exam — Admin Dashboard</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&display=swap">
 <style>
-*{margin:0;padding:0;box-sizing:border-box}
-body{font-family:-apple-system,"Segoe UI",sans-serif;background:#0f172a;color:#e2e8f0;padding:16px}
-h1{font-size:19px;margin-bottom:14px;color:#f1f5f9}
+:root{
+  --bg:#0f1a45;
+  --panel:#202f6a;
+  --panel-hover:#2c3f8f;
+  --border:#3a4d96;
+  --text:#eef2f7;
+  --muted:#94a3b8;
+  --accent:#4da964;
+  --accent-hover:#3a9a55;
+  --success:#22c55e;
+  --warning:#f59e0b;
+  --danger:#ef4444;
+  --ink:#1e293b;
+}
+* { margin:0; padding:0; box-sizing:border-box }
+html, body { height:100% }
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;background:var(--bg);color:var(--text);padding:20px;line-height:1.45}
+a{color:var(--accent);text-decoration:none}
+h1{font-size:20px;letter-spacing:.02em;font-family:"Barlow Condensed","Arial Narrow",Impact,sans-serif;text-transform:uppercase}
+h2{font-size:13px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:10px;font-weight:700}
 
-/* layout */
-.main-grid{display:grid;grid-template-columns:1.3fr 1fr;gap:14px;margin-bottom:14px}
-.card{background:#1e293b;border-radius:10px;padding:14px;border:1px solid #334155}
-.card h2{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:#64748b;margin-bottom:10px}
+/* ---------- header ---------- */
+.header{border-bottom:3px solid #4da964!important;display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid var(--border);flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:10px}
+.brand .mark{width:44px;height:44px;border-radius:50%;background:#fff;padding:2px}
+.brand h1{font-size:24px;margin:0;font-family:"Barlow Condensed","Arial Narrow",Impact,sans-serif;text-transform:uppercase}
+.subtitle{font-size:12px;color:var(--muted);margin-top:2px}
 
-/* video */
-.video-feed{width:100%;border-radius:8px;display:block;background:#000}
-.cam-tabs{display:flex;gap:6px;margin-bottom:8px}
-.cam-tab{flex:1;background:#0f172a;color:#e2e8f0;border:1px solid #334155;
-padding:6px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer}
-.cam-tab.active{background:#3b82f6;border-color:#3b82f6;color:#fff}
-.seat-cell{background:#0f172a;border-radius:6px;padding:6px;font-size:10px;
-text-align:center;min-height:54px;display:flex;flex-direction:column;
-justify-content:center;align-items:center;border:1px solid #1e293b}
-.seat-cell.paper{border-color:#f59e0b;background:#3b2a05}
-.seat-cell .seat-id{color:#64748b;font-size:9px}
-.seat-cell .seat-papers{color:#facc15;font-weight:700}
+/* ---------- status bar ---------- */
+.status-bar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:16px}
+.pill{padding:6px 14px;border-radius:999px;font-size:12px;font-weight:700;background:var(--panel);border:1px solid var(--border);color:var(--muted)}
+.pill.running{background:#064e3b;border-color:#065f46;color:#86efac}
+.pill.paused{background:#7f1d1d;border-color:#991b1b;color:#fecaca}
+.badge-count{padding:6px 14px;border-radius:999px;font-size:12px;font-weight:700;background:var(--panel);border:1px solid var(--border);color:var(--accent)}
+.setup-banner{background:#2c3f8f;color:#dbeafe;padding:8px 14px;border-radius:8px;font-size:13px;font-weight:600;display:none;margin-left:auto;white-space:nowrap}
 
-/* top bar */
-.top-bar{display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap}
-.fps-badge{background:#0f172a;padding:4px 10px;border-radius:6px;font-size:12px;font-weight:600}
-.fps-badge.ok{color:#4ade80}.fps-badge.warn{color:#fb923c}.fps-badge.bad{color:#f87171}
-
-.count-badge{background:#0f172a;padding:4px 10px;border-radius:6px;font-size:12px;font-weight:600;color:#60a5fa}
-
-.setup-banner{background:#1e3a8a;color:#dbeafe;padding:8px 14px;border-radius:8px;
-font-size:13px;font-weight:600;display:none}
-
-/* pause / resume controls */
-.control-bar{display:flex;align-items:center;gap:10px;margin-bottom:12px}
-.btn{border:none;padding:8px 18px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer}
-.btn-pause{background:#f59e0b;color:#1c1917}
-.btn-pause:hover{background:#d97706}
-.btn-resume{background:#22c55e;color:#06210f}
-.btn-resume:hover{background:#16a34a}
-.btn:disabled{opacity:.4;cursor:not-allowed}
-
-.status-pill{padding:4px 12px;border-radius:999px;font-size:12px;font-weight:700}
-.status-pill.running{background:#166534;color:#bbf7d0}
-.status-pill.paused{background:#7f1d1d;color:#fecaca}
-
-/* alert banner */
-.alert-banner{display:none;background:#7f1d1d;color:#fecaca;padding:10px 16px;
-border-radius:8px;font-size:13px;font-weight:600;margin-bottom:12px;align-items:center;
-justify-content:space-between;gap:12px}
+/* ---------- alert ---------- */
+.alert-banner{display:none;background:#7f1d1d;color:#fecaca;padding:10px 16px;border-radius:8px;font-size:13px;font-weight:600;margin-bottom:14px;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
 .alert-banner.show{display:flex}
-.alert-banner .resume-inline{background:#fff;color:#7f1d1d;border:none;padding:6px 14px;
-border-radius:6px;font-weight:700;font-size:12px;cursor:pointer;flex-shrink:0}
+.alert-banner .resume-inline{background:#fff;color:#7f1d1d;border:none;padding:7px 16px;border-radius:6px;font-weight:800;font-size:12px;cursor:pointer;flex-shrink:0}
 .alert-banner .resume-inline:hover{background:#fee2e2}
 
-/* assign form */
-.assign-form{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
-.assign-form input{background:#0f172a;border:1px solid #334155;color:#e2e8f0;
-padding:5px 8px;border-radius:6px;font-size:12px;width:90px}
-.assign-form input.wide{width:150px}
-.assign-form button{background:#3b82f6;color:#fff;border:none;padding:5px 12px;
-border-radius:6px;font-size:12px;cursor:pointer;font-weight:600}
-.assign-form button:hover{background:#2563eb}
-.assign-msg{font-size:11px;color:#4ade80;margin-top:4px;display:none}
+/* ---------- buttons ---------- */
+.btn{border:none;padding:8px 18px;border-radius:10px;font-size:13px;font-weight:800;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+.btn:active{transform:translateY(1px)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn-pause{background:var(--warning);color:#1c1917}
+.btn-pause:hover:not(:disabled){background:#d97706}
+.btn-resume{background:var(--success);color:#06210f}
+.btn-resume:hover:not(:disabled){background:#16a34a}
+.btn-accent{background:var(--accent);color:#fff}
+.btn-accent:hover:not(:disabled){background:var(--accent-hover)}
+.btn-outline{background:transparent;border:1px solid var(--border);color:var(--text)}
+.btn-outline:hover:not(:disabled){border-color:var(--accent);color:var(--accent)}
 
-/* student cards grid */
-.students-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px}
+/* ---------- controls ---------- */
+.controls{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
 
-.student-card{background:#1e293b;border-radius:10px;padding:12px;border:2px solid #334155;
-transition:border-color .3s}
-.student-card.suspicious{border-color:#ef4444}
-.student-card.warning{border-color:#f59e0b}
+/* ---------- panels ---------- */
+.panel{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:16px}
+.panel h2{margin-bottom:12px;color:var(--text)}
+.panel .panel-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px;flex-wrap:wrap}
 
-.sc-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px}
-.sc-name{font-size:15px;font-weight:700}
-.sc-id{font-size:11px;color:#64748b}
-.sc-score{font-size:32px;font-weight:800;color:#facc15;line-height:1}
-.sc-score.suspicious{color:#ef4444}
+/* grid page layout */
+.page-grid{display:grid;grid-template-columns:1.5fr 1fr;gap:16px}
 
-.badge{display:inline-block;padding:2px 9px;border-radius:999px;font-size:10px;font-weight:700;margin-top:3px}
-.badge.present{background:#166534;color:#bbf7d0}
-.badge.temporarily_missing{background:#854d0e;color:#fef08a}
-.badge.warning_missing{background:#9a3412;color:#fed7aa}
-.badge.exited{background:#7f1d1d;color:#fecaca}
-.badge.clean{background:#166534;color:#bbf7d0}
-.badge.suspicious-badge{background:#7f1d1d;color:#fecaca}
+/* ---------- camera ---------- */
+.cam-wrap{position:relative;border-radius:12px;overflow:hidden;background:#000;border:1px solid var(--border)}
+.cam-tabs{position:absolute;left:12px;top:12px;z-index:3;display:flex;gap:8px;background:rgba(15,23,42,.6);backdrop-filter:blur(6px);padding:6px;border-radius:10px;border:1px solid rgba(255,255,255,.08)}
+.cam-tab{padding:7px 14px;border-radius:8px;font-size:12px;font-weight:700;border:1px solid transparent;color:var(--muted);background:transparent;cursor:pointer}
+.cam-tab.active{background:rgba(77,169,100,.25);color:#fff;border-color:rgba(77,169,100,.6)}
+.cam-tab:hover:not(.active){color:var(--text)}
+.video-feed{width:100%;height:100%;display:block;background:#000;object-fit:cover}
+.cam-dim{position:absolute;right:12px;top:12px;z-index:4;background:rgba(15,23,42,.75);backdrop-filter:blur(6px);padding:8px 12px;border-radius:10px;font-size:12px;color:var(--muted);border:1px solid rgba(255,255,255,.08);line-height:1.5}
+.cam-dim b{color:var(--text)}
 
-/* stats mini grid */
-.mini-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:5px;margin:8px 0}
-.ms-item{background:#0f172a;border-radius:6px;padding:5px 7px}
-.ms-label{font-size:9px;color:#64748b;text-transform:uppercase}
-.ms-val{font-size:13px;font-weight:600;margin-top:1px}
-.ms-val.ok{color:#4ade80}.ms-val.warn{color:#f87171}.ms-val.dim{color:#64748b}
+/* ---------- student cards ---------- */
+.students-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:14px}
+.empty{grid-column:1/-1;color:var(--muted);text-align:center;padding:30px;font-size:13px}
+.student-card{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:14px;transition:border-color .2s,box-shadow .2s;display:flex;flex-direction:column;gap:10px}
+.student-card:hover{border-color:var(--panel-hover);box-shadow:0 8px 24px -6px rgba(0,0,0,.35)}
+.student-card.suspicious{border-color:var(--danger);box-shadow:0 0 0 2px rgba(239,68,68,.15)}
+.student-card.warning{border-color:var(--warning);box-shadow:0 0 0 2px rgba(245,158,11,.15)}
+.scard-head{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.scard-avatar{width:36px;height:36px;border-radius:50%;background:#4da964;display:grid;place-items:center;color:#fff;font-weight:800;font-size:13px;flex-shrink:0}
+.scard-info{flex:1;min-width:0}
+.scard-name{font-size:15px;font-weight:800;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.scard-id{font-size:11px;color:var(--muted);margin-top:2px}
+.scard-status{font-size:11px;font-weight:800;padding:3px 9px;border-radius:999px;background:rgba(77,169,100,.18);color:#b9e6c5;white-space:nowrap}
+.scard-status.present{background:rgba(34,197,94,.15);color:#86efac}
+.scard-status.warning{background:rgba(245,158,11,.15);color:#fcd34d}
+.scard-status.danger{background:rgba(239,68,68,.15);color:#fca5a5}
+.scard-meta{display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:11.5px;color:var(--muted)}
+.scard-meta .kv b{color:var(--text);display:block;font-size:15px}
+.scard-events{max-height:110px;overflow-y:auto;border-top:1px solid var(--border);padding-top:8px;margin-top:4px}
+.ev-row{display:flex;gap:8px;padding:5px 0;border-bottom:1px solid rgba(255,255,255,.04);align-items:center;font-size:11.5px}
+.ev-row:last-child{border:none}
+.ev-chip{width:26px;height:18px;border-radius:4px;background:#0b1120;flex-shrink:0;display:grid;place-items:center;font-size:9px;font-weight:800}
+.ev-text{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ev-time{color:var(--muted);font-size:10px;flex-shrink:0}
+.no-events{color:var(--muted);font-size:11px;text-align:center;padding:10px 0;display:block}
 
-/* baseline bar */
-.baseline-row{background:#0f172a;border-radius:6px;padding:5px 8px;margin-bottom:8px;font-size:11px}
-.baseline-label{color:#64748b}
-.baseline-val{color:#facc15;font-weight:600}
-.baseline-val.ready{color:#4ade80}
+/* ---------- mini stats ---------- */
+.mini-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:4px}
+.ms-item{background:#0b1120;border:1px solid var(--border);border-radius:10px;padding:10px 12px}
+.ms-label{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+.ms-val{font-size:15px;font-weight:800;margin-top:3px;color:var(--text)}
+.ms-val.ok{color:var(--success)}
+.ms-val.warn{color:var(--warning)}
+.ms-val.dim{color:var(--muted)}
 
-/* events */
-.ev-list{max-height:180px;overflow-y:auto}
-.ev-item{display:flex;gap:8px;padding:6px 2px;border-bottom:1px solid #1e293b;align-items:center}
-.ev-item:last-child{border:none}
-.ev-thumb{width:50px;height:36px;object-fit:cover;border-radius:4px;background:#0f172a;
-cursor:pointer;flex-shrink:0}
-.ev-thumb-empty{width:50px;height:36px;border-radius:4px;background:#0f172a;flex-shrink:0}
-.ev-info{flex:1;min-width:0}
-.ev-name{font-size:11px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.ev-time{font-size:10px;color:#64748b}
-.ev-pts{font-size:12px;font-weight:700;color:#f87171;flex-shrink:0}
-.no-events{color:#64748b;text-align:center;padding:20px 0;font-size:12px}
+/* ---------- baseline ---------- */
+.baseline-row{background:#0b1120;border:1px solid var(--border);border-radius:10px;padding:8px 12px;font-size:11.5px;margin-top:8px;display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+.baseline-label{color:var(--muted)}
+.baseline-val{color:#facc15;font-weight:800}
+.baseline-val.ready{color:var(--success)}
 
-/* modal */
-.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:100;
-align-items:center;justify-content:center}
+/* ---------- seat grid ---------- */
+.seat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(80px,1fr));gap:8px}
+.seat-cell{background:#0b1120;border:1px solid var(--border);border-radius:10px;padding:8px;font-size:11px;text-align:center;display:flex;flex-direction:column;justify-content:center;align-items:center;min-height:70px}
+.seat-cell.paper{border-color:var(--warning);background:#2a1b05}
+.seat-id{color:var(--muted);font-size:9px}
+.seat-papers{color:#facc15;font-weight:800}
+
+/* ---------- assign form ---------- */
+.assign-form{display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end}
+.assign-form input{background:#0b1120;border:1px solid var(--border);color:var(--text);padding:7px 10px;border-radius:8px;font-size:12px;width:120px}
+.assign-form button{background:var(--accent);color:#fff;border:none;padding:7px 16px;border-radius:8px;font-size:12px;cursor:pointer;font-weight:800}
+.assign-form button:hover{background:var(--accent-hover)}
+.assign-msg{font-size:11px;color:var(--success);margin-top:6px;display:none}
+.footnote{font-size:11px;color:var(--muted);margin-top:8px;line-height:1.5}
+
+/* ---------- modal ---------- */
+.modal{display:none;position:fixed;inset:0;background:rgba(2,6,14,.9);z-index:60;align-items:center;justify-content:center;padding:20px}
 .modal.open{display:flex}
-.modal img{max-width:90%;max-height:90%;border-radius:8px}
+.modal-content{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:0;max-width:90vw;max-height:90vh;overflow:hidden;position:relative;display:flex;flex-direction:column}
+.modal .close{position:absolute;right:14px;top:12px;z-index:5;background:rgba(15,23,42,.8);color:#fff;border:none;padding:6px 12px;border-radius:8px;font-size:12px;font-weight:800;cursor:pointer}
+.modal .close:hover{background:rgba(15,23,42,.95)}
+.modal-body{padding:14px;flex:1;overflow:auto}
+.modal img{max-width:100%;max-height:70vh;display:block;margin:0 auto;border-radius:8px;background:#000}
+.modal h3{margin-bottom:8px;font-size:14px}
+
+/* ---------- responsive ---------- */
+@media (max-width: 900px){
+  .page-grid{grid-template-columns:1fr}
+  .header{flex-direction:column;align-items:flex-start}
+  .setup-banner{margin-left:0;width:100%;justify-content:space-between}
+  .status-bar{justify-content:space-between;width:100}
+}
+@media (max-width: 600px){
+  body{padding:12px}
+  .students-grid{grid-template-columns:1fr}
+}
 </style>
 </head>
 <body>
 
-<h1>🎓 Smart Exam Proctoring — Live Dashboard</h1>
-
-<!-- Top bar -->
-<div class="top-bar">
-  <span class="fps-badge" id="fpsBadge">FPS: —</span>
-  <span class="count-badge" id="countBadge">Students: 0</span>
-  <span class="status-pill running" id="statusPill">RUNNING</span>
-  <div class="setup-banner" id="setupBanner">
-    Setting up desk zones… <span id="setupProgress">0/30</span> — keep students seated still.
+<!-- Header -->
+<div class="header">
+  <div class="brand">
+    <img class="mark" src="/static/must_logo.webp" alt="MUST">
+    <div>
+      <h1>MUST Smart Exam</h1>
+      <div class="subtitle">Operator console &bull; <a href="/app">Open dashboard</a> &bull; <a href="/logout">Log out</a></div>
+    </div>
+  </div>
+  <div class="status-bar">
+    <span class="pill running" id="statusPill">RUNNING</span>
+    <span class="badge-count" id="countBadge">Students: 0</span>
+    <span class="fps" id="fpsBadge" style="padding:6px 12px;border-radius:8px;font-size:12px;font-weight:700;background:var(--panel);border:1px solid var(--border);color:var(--muted)">FPS: —</span>
+    <div class="setup-banner" id="setupBanner">
+      Setting up desk zones… <span id="setupProgress">0/30</span> — keep students seated still.
+    </div>
   </div>
 </div>
 
-<!-- Count-change / pause alert -->
+<!-- Alert banner (count-change / pause) -->
 <div class="alert-banner" id="alertBanner">
   <span id="alertText"></span>
   <button class="resume-inline" onclick="resumeExam()">Resume</button>
 </div>
 
-<!-- Pause / Resume controls -->
-<div class="control-bar">
-  <button class="btn btn-pause" id="pauseBtn" onclick="pauseExam()">⏸ Pause</button>
-  <button class="btn btn-resume" id="resumeBtn" onclick="resumeExam()">▶ Resume</button>
+<!-- Controls -->
+<div class="controls">
+  <button class="btn btn-pause" id="pauseBtn" onclick="pauseExam()">&#9208; Pause</button>
+  <button class="btn btn-resume" id="resumeBtn" onclick="resumeExam()">&#9654; Resume</button>
+  <button class="btn btn-accent" onclick="location.reload()">Refresh</button>
 </div>
 
-<!-- Assign student form (cosmetic relabel — auto-ID already applied) -->
-<div class="card" style="margin-bottom:14px">
-  <h2>Relabel a Track (optional — IDs are already auto-assigned)</h2>
+<!-- Page grid: camera + students -->
+<div class="page-grid">
+
+  <!-- Camera panel -->
+  <div class="panel">
+    <div class="panel-head">
+      <h2>Live Camera</h2>
+      <div class="cam-dim" id="robotDim">Pan: —° Tilt: —° &#8226; Sweep: off &#8226; Papers: 0</div>
+    </div>
+    <div class="cam-wrap" id="camWrap">
+      <div class="cam-tabs">
+        <button class="cam-tab active" id="tabStable" onclick="switchCam('stable')">Stable</button>
+        <button class="cam-tab" id="tabRobot" onclick="switchCam('robot')">Robot</button>
+      </div>
+      <img class="video-feed" id="camStable" src="/video_feed" alt="Stable feed" style="display:block">
+      <img class="video-feed" id="camRobot" src="/robot_feed" alt="Robot feed" style="display:none">
+    </div>
+  </div>
+
+  <!-- Students panel -->
+  <div class="panel">
+    <div class="panel-head">
+      <h2>Students in Class</h2>
+    </div>
+    <div id="studentsGrid" class="students-grid">
+      <div class="empty">Waiting for detections&#8230;</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Seat grid (robot camera paper distribution) -->
+<div class="panel">
+  <div class="panel-head">
+    <h2>Seat Grid — Desk Materials</h2>
+  </div>
+  <div id="seatGrid" class="seat-grid">
+    <div style="color:var(--muted);font-size:12px;grid-column:1/-1;text-align:center;padding:24px 0">No seat data yet. Start robot sweep.</div>
+  </div>
+</div>
+
+<!-- Assign student form -->
+<div class="panel">
+  <div class="panel-head"><h2>Relabel Track (optional)</h2></div>
   <div class="assign-form">
-    <input type="number" id="inTrackId"   placeholder="Track #"  min="0">
-    <input type="text"   id="inStudentId" placeholder="Student ID (e.g. 2021001)" class="wide">
-    <input type="text"   id="inName"      placeholder="Name (e.g. Ahmed Ali)"     class="wide">
+    <input type="number" id="inTrackId" placeholder="Track #" min="0">
+    <input type="text" id="inStudentId" placeholder="Student ID (e.g. 2021001)">
+    <input type="text" id="inName" placeholder="Name (e.g. Ahmed Ali)">
     <button onclick="assignStudent()">Assign</button>
   </div>
   <div class="assign-msg" id="assignMsg"></div>
-  <div style="font-size:11px;color:#64748b;margin-top:6px">
-    Every detected student already gets an automatic ID (AUTO-0, AUTO-1, …) the moment they appear —
-    no setup needed. Use this form only if you want to replace the auto ID with the real student name/ID.
-  </div>
-</div>
-
-<!-- Main grid: camera + students -->
-<div class="main-grid">
-  <div class="card">
-    <div class="cam-tabs">
-      <button class="cam-tab active" id="tabStable" onclick="switchCam('stable')">Stable Camera</button>
-      <button class="cam-tab" id="tabRobot" onclick="switchCam('robot')">Robot Camera</button>
-    </div>
-    <img class="video-feed" id="camStable" src="/video_feed" alt="Stable feed"
-         style="display:block">
-    <img class="video-feed" id="camRobot" src="/robot_feed" alt="Robot feed"
-         style="display:none">
-    <div id="robotStatus" style="display:none;font-size:11px;color:#64748b;margin-top:6px">
-      Pan: —° Tilt: —° Sweep: off | Papers on desk: 0
-    </div>
-  </div>
-  <div class="card">
-    <h2>Students Overview</h2>
-    <div id="studentsGrid" class="students-grid">
-      <div style="color:#64748b;font-size:13px">Waiting for detections…</div>
-    </div>
-  </div>
-</div>
-
-<!-- Seat grid (in-person paper-distribution view) -->
-<div class="card" style="margin-top:14px">
-  <h2>Seat Grid — Desk Materials (Robot Camera)</h2>
-  <div id="seatGrid" class="seat-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:8px">
-    <div style="color:#64748b;font-size:13px">No seat data yet. Start robot sweep.</div>
-  </div>
+  <div class="footnote">Detected students get automatic IDs (AUTO-0, AUTO-1&#8230;) on first appearance. Use this form only to replace with real student ID/name.</div>
 </div>
 
 <!-- Evidence modal -->
 <div class="modal" id="evidenceModal" onclick="this.classList.remove('open')">
-  <img id="modalImg" src="" alt="Evidence">
+  <div class="modal-content">
+    <button class="close" onclick="event.stopPropagation();document.getElementById('evidenceModal').classList.remove('open')">&times;</button>
+    <div class="modal-body">
+      <h3 id="modalTitle">Evidence</h3>
+      <img id="modalImg" src="" alt="Evidence">
+    </div>
+  </div>
 </div>
 
 <script>
-// WebSocket-driven dashboard (no polling). Falls back to HTTP /api/status
-// if the socket disconnects.
-let ws = null;
 let currentCam = "stable";
-let lastSnapshot = null;
-
-function connectWS() {
-  const proto = (location.protocol === "https:") ? "wss" : "ws";
-  ws = new WebSocket(`${proto}://${location.host}/socket.io/?EIO=4&transport=websocket`);
-  ws.onopen = () => console.log("[ws] connected");
-  ws.onmessage = (ev) => { refresh(); };
-  ws.onclose = () => { setTimeout(connectWS, 2000); };
-  ws.onerror = () => { try { ws.close(); } catch(e){} };
-}
 
 function switchCam(cam) {
   currentCam = cam;
@@ -223,9 +269,53 @@ function switchCam(cam) {
   document.getElementById("tabRobot").classList.toggle("active", cam === "robot");
   document.getElementById("camStable").style.display = (cam === "stable") ? "block" : "none";
   document.getElementById("camRobot").style.display = (cam === "robot") ? "block" : "none";
-  const rs = document.getElementById("robotStatus");
-  rs.style.display = (cam === "robot") ? "block" : "none";
 }
+
+function statusPillState(paused) {
+  const p = document.getElementById("statusPill");
+  if (paused) {
+    p.textContent = "PAUSED";
+    p.className = "pill paused";
+  } else {
+    p.textContent = "RUNNING";
+    p.className = "pill running";
+  }
+}
+
+function renderTrack(r) {
+  const suspicious = r.is_suspicious;
+  const warn = !suspicious && r.score > 0;
+  const statusCls = suspicious ? "danger" : (warn ? "warning" : "present");
+  const statusTxt = suspicious ? "Suspicious" : (warn ? "Warning" : "Present");
+  const eventsHtml = (r.events && r.events.length)
+    ? r.events.map(e => `
+      <div class="ev-row">
+        <div class="ev-chip" style="background:${e.points>=5?'#fca5a5':'#4da964'}">${e.points}</div>
+        <div class="ev-text">${e.name}</div>
+        <div class="ev-time">${e.time}</div>
+      </div>`).join("")
+    : '<span class="no-events">No events</span>';
+  return `
+    <div class="student-card${suspicious?' suspicious':''}${warn?' warning':''}">
+      <div class="scard-head">
+        <div class="scard-avatar">${r.student_id.charAt(0).toUpperCase()}</div>
+        <div class="scard-status ${statusCls}">${statusTxt}</div>
+      </div>
+      <div class="scard-info">
+        <div class="scard-name">${escapeHtml(r.name)}</div>
+        <div class="scard-id">${escapeHtml(r.student_id)} &#8226; track #${r.track_id}</div>
+      </div>
+      <div class="scard-meta">
+        <div class="kv"><span class="ms-label">Score</span><b class="${suspicious?'warn':''}">${r.score}</b></div>
+        <div class="kv"><span class="ms-label">Presence</span><b>${r.presence_state.replace(/_/g,' ').toUpperCase()}</b></div>
+        <div class="kv"><span class="ms-label">Zone</span><b>${(r.zone_status||'unknown').toUpperCase()}</b></div>
+        <div class="kv"><span class="ms-label">Gaze</span><b>${r.gaze_dir}</b></div>
+      </div>
+      <div class="scard-events">${eventsHtml}</div>
+    </div>`;
+}
+
+function escapeHtml(s){return String(s===""?"":s).replace(/[&<>"']/g,c=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]))}
 
 function renderSeatGrid(snapshot) {
   const grid = document.getElementById("seatGrid");
@@ -233,15 +323,14 @@ function renderSeatGrid(snapshot) {
   const papers = robot.papers || [];
   const tracks = snapshot.tracks || [];
   if (!tracks.length) {
-    grid.innerHTML = '<div style="color:#64748b;font-size:13px">No seat data yet. Start robot sweep.</div>';
+    grid.innerHTML = '<div style="color:var(--muted);font-size:12px;grid-column:1/-1;text-align:center;padding:24px 0">No seat data yet. Start robot sweep.</div>';
     return;
   }
   grid.innerHTML = tracks.map(t => {
-    const seatPapers = papers.filter(pp => pp.track_id === t.track_id);
-    const n = seatPapers.length;
+    const n = (papers.filter(pp => pp.track_id === t.track_id)).length;
     const cls = n > 0 ? "seat-cell paper" : "seat-cell";
     return `<div class="${cls}">
-      <div class="seat-id">${t.name}</div>
+      <div class="seat-id">${escapeHtml(t.name)} #${t.track_id}</div>
       <div class="seat-papers">${n} paper${n===1?"":"s"}</div>
     </div>`;
   }).join("");
@@ -251,55 +340,45 @@ function refresh() {
   fetch("/api/status")
     .then(r => r.json())
     .then(data => {
-      lastSnapshot = data;
       const fps = data.fps ?? 0;
       const fpsEl = document.getElementById("fpsBadge");
       fpsEl.textContent = `FPS: ${fps}`;
-      fpsEl.className = "fps-badge " + (fps>=15?"ok":fps>=8?"warn":"bad");
+      fpsEl.style.color = fps>=15?"#4ade80":fps>=8?"#fb923c":"#f87171";
 
       document.getElementById("countBadge").textContent = `Students: ${data.live_count ?? 0}`;
 
       const banner = document.getElementById("setupBanner");
       if (!data.is_setup_complete) {
         banner.style.display = "block";
-        document.getElementById("setupProgress").textContent =
-          `${data.setup_progress[0]}/${data.setup_progress[1]}`;
+        document.getElementById("setupProgress").textContent = `${data.setup_progress[0]}/${data.setup_progress[1]}`;
       } else {
         banner.style.display = "none";
       }
 
       const ec = data.exam_control || {};
-      const statusPill = document.getElementById("statusPill");
+      statusPillState(ec.paused);
       const pauseBtn = document.getElementById("pauseBtn");
       const resumeBtn = document.getElementById("resumeBtn");
       const alertEl = document.getElementById("alertBanner");
       const alertText = document.getElementById("alertText");
-
       if (ec.paused) {
-        statusPill.textContent = "PAUSED";
-        statusPill.className = "status-pill paused";
-        pauseBtn.disabled = true;
-        resumeBtn.disabled = false;
+        pauseBtn.disabled = true; resumeBtn.disabled = false;
         alertText.textContent = ec.alert_message || "Exam paused.";
         alertEl.classList.add("show");
       } else {
-        statusPill.textContent = "RUNNING";
-        statusPill.className = "status-pill running";
-        pauseBtn.disabled = false;
-        resumeBtn.disabled = true;
+        pauseBtn.disabled = false; resumeBtn.disabled = true;
         alertEl.classList.remove("show");
       }
 
       const robot = data.robot || {};
-      const rs = document.getElementById("robotStatus");
-      if (rs) {
-        rs.textContent = `Pan: ${robot.pan ?? "—"}° Tilt: ${robot.tilt ?? "—"}° ` +
-          `Sweep: ${robot.sweeping ? "ON" : "off"} | Papers on desk: ${(robot.papers||[]).length}`;
+      const dim = document.getElementById("robotDim");
+      if (dim) {
+        dim.textContent = `Pan: ${robot.pan?? "—"}° Tilt: ${robot.tilt?? "—"}° &#8226; Sweep: ${robot.sweeping ? "ON" : "off"} &#8226; Papers: ${(robot.papers||[]).length}`;
       }
 
       const grid = document.getElementById("studentsGrid");
       if (!data.tracks || data.tracks.length === 0) {
-        grid.innerHTML = '<div style="color:#64748b;font-size:13px">No students detected yet…</div>';
+        grid.innerHTML = '<div class="empty">No students detected yet&#8230;</div>';
       } else {
         grid.innerHTML = data.tracks.map(renderTrack).join("");
       }
@@ -310,8 +389,23 @@ function refresh() {
 
 refresh();
 setInterval(refresh, 1000);
-connectWS();
 
+function pauseExam(){fetch("/api/pause",{method:"POST"}).then(r=>r.json()).then(d=>{statusPillState(true);document.getElementById("alertText").textContent=d.alert_message||"Exam paused.";document.getElementById("alertBanner").classList.add("show");document.getElementById("pauseBtn").disabled=true;document.getElementById("resumeBtn").disabled=false;})}
+function resumeExam(){fetch("/api/resume",{method:"POST"}).then(r=>r.json()).then(d=>{statusPillState(false);document.getElementById("alertBanner").classList.remove("show");document.getElementById("pauseBtn").disabled=false;document.getElementById("resumeBtn").disabled=true;})}
+function assignStudent(){
+  const tid=parseInt(document.getElementById("inTrackId").value,10);
+  const sid=document.getElementById("inStudentId").value.trim();
+  const name=document.getElementById("inName").value.trim();
+  const msg=document.getElementById("assignMsg");
+  fetch("/api/assign_student",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({track_id:tid,student_id:sid,name:name})})
+    .then(r=>r.json()).then(d=>{
+      msg.textContent=d.ok?"Assigned.":(d.error||"Failed.");
+      msg.style.display="block";msg.style.color=d.ok?varSuccess(): "#f87171";
+      if(d.ok){document.getElementById("inTrackId").value="";document.getElementById("inStudentId").value="";document.getElementById("inName").value="";}
+    });
+}
+function varSuccess(){return "var(--success)"}
+function showEvidence(src,title){document.getElementById("modalImg").src=src;document.getElementById("modalTitle").textContent=title||"Evidence";document.getElementById("evidenceModal").classList.add("open")}
 </script>
 </body>
 </html>

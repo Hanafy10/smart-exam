@@ -1,0 +1,146 @@
+{% raw %}<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>MUST Smart Exam</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&display=swap">
+<style>
+:root{--navy:#202f6a;--navy2:#2c3f8f;--red:#2f8a49;--gr:#4da964;--btn:#202f6a;--btnt:#fff;--hf:"Barlow Condensed","Arial Narrow",Impact,sans-serif;--bg:#f3f5f9;--card:#fff;--bd:#dde3ee;--tx:#14213d;--mu:#64718a;--ok:#16a34a;--wn:#d97706;--dg:#dc2626;--okb:#dcfce7;--wnb:#fef3c7;--dgb:#fee2e2;--side:#202f6a;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#0b1322;--card:#13203a;--bd:#25375a;--tx:#e8edf7;--mu:#93a3c0;--okb:#0f3a24;--wnb:#47310a;--dgb:#4a1414;--side:#101a3f;--btn:#4da964;--btnt:#0b1322}}
+:root[data-theme=dark]{--bg:#0b1322;--card:#13203a;--bd:#25375a;--tx:#e8edf7;--mu:#93a3c0;--okb:#0f3a24;--wnb:#47310a;--dgb:#4a1414;--side:#101a3f;--btn:#4da964;--btnt:#0b1322}
+*{box-sizing:border-box;margin:0}html,body{height:100%}
+body{font-family:"Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif;background:var(--bg);color:var(--tx);font-size:14px}
+button{font:inherit;cursor:pointer}
+#login{min-height:100%;display:grid;grid-template-columns:1.1fr 1fr}
+.hero{background:var(--navy);color:#fff;padding:48px;display:flex;flex-direction:column;justify-content:space-between}
+.hero h1{font-family:var(--hf);font-size:52px;line-height:1.05;margin:18px 0 10px;text-transform:uppercase}.hero h1 em{font-style:normal;color:var(--gr)}.hero .lg{width:96px;height:96px;background:#fff;border-radius:50%;padding:4px}.hero p{opacity:.8;max-width:420px}
+.logo{display:flex;align-items:center;gap:10px;font-weight:800;letter-spacing:.04em}
+.logo img{width:44px;height:44px;background:#fff;border-radius:50%;padding:2px}.hero .logo img{width:84px;height:84px}.logo{font-family:var(--hf);font-size:17px;text-transform:uppercase}
+.lw{display:grid;place-items:center;padding:24px}
+.lb{width:100%;max-width:380px;background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:28px;box-shadow:0 8px 28px rgba(15,42,82,.12)}
+.lb h2{margin-bottom:4px}.lb small{color:var(--mu)}
+.roles{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:16px 0}
+.roles button{padding:12px;border:1px solid var(--bd);background:var(--bg);border-radius:10px;color:var(--tx);font-weight:600}
+.roles button.on{border-color:var(--gr);box-shadow:inset 0 0 0 2px var(--gr)}.lb h2,.top h1,.c h3,.k b,.nav,.btn,th{font-family:var(--hf)}.lb h2{font-size:28px;color:var(--btn)}.lb h2,.top h1{text-transform:uppercase;letter-spacing:.02em}
+label{display:block;font-size:12px;color:var(--mu);margin:10px 0 4px}
+input,select{width:100%;padding:10px;border:1px solid var(--bd);border-radius:8px;background:var(--card);color:var(--tx);font:inherit}
+.btn{background:var(--btn);color:var(--btnt);border:0;padding:10px 16px;border-radius:8px;font-weight:700}
+.btn.s{background:var(--bg);color:var(--tx);border:1px solid var(--bd)}.btn.w{width:100%;margin-top:16px}
+#app{display:grid;height:100%;grid-template-columns:230px 1fr}
+aside{background:var(--side);color:#cbd5e8;padding:16px 10px;display:flex;flex-direction:column;gap:2px;overflow:auto}
+aside .logo{color:#fff;padding:4px 8px 14px;border-bottom:1px solid rgba(255,255,255,.12);margin-bottom:10px}
+aside small{display:block;font-weight:400;font-size:11px;opacity:.7;letter-spacing:0}
+.nav{background:none;border:0;color:inherit;text-align:left;padding:10px 12px;border-radius:8px;font-weight:600;border-left:3px solid transparent}
+.nav:hover{background:rgba(255,255,255,.08)}.nav.on{background:rgba(255,255,255,.12);color:var(--gr);border-left-color:var(--gr)}.nav{font-size:16px;letter-spacing:.03em;text-transform:uppercase}
+.out{margin-top:auto}
+main{display:flex;flex-direction:column;min-width:0;height:100%}
+.top{display:flex;align-items:center;gap:12px;padding:12px 24px;background:var(--navy);color:#fff;border-bottom:3px solid var(--gr)}.top input{background:rgba(255,255,255,.12);color:#fff;border-color:rgba(255,255,255,.25)}.top input::placeholder{color:#cdd6f0}.top .btn.s{background:transparent;color:#fff;border-color:rgba(255,255,255,.35)}
+.top h1{font-size:26px}.crumb{font-size:12px;color:#cdd6f0}.crumb b{color:var(--gr);margin:0 6px}
+.top input{max-width:220px}
+.user{display:flex;align-items:center;gap:8px;font-weight:600}.av{width:32px;height:32px;border-radius:50%;background:var(--navy2);color:#fff;display:grid;place-items:center;font-size:12px}
+#view{padding:24px;overflow:auto;flex:1}
+.g{display:grid;gap:16px}.g4{grid-template-columns:repeat(auto-fit,minmax(170px,1fr))}.g2{grid-template-columns:1.6fr 1fr}
+.c{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:16px;box-shadow:0 1px 3px rgba(15,42,82,.06);min-width:0}
+.c h3{font-size:15px;color:var(--mu);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center}
+.k b{font-size:34px;display:block;color:var(--navy2)}.k span{color:var(--mu);font-size:12px}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]) .k b{color:#8fb4ff}}
+:root[data-theme=dark] .k b{color:#8fb4ff}
+.tag{display:inline-block;padding:2px 9px;border-radius:99px;font-size:11px;font-weight:700}
+.t-ok{background:var(--okb);color:var(--ok)}.t-wn{background:var(--wnb);color:var(--wn)}.t-dg{background:var(--dgb);color:var(--dg)}.t-mu{background:var(--bg);color:var(--mu)}
+.tw{overflow-x:auto}table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:9px 8px;border-bottom:1px solid var(--bd);white-space:nowrap}th{font-size:11px;color:var(--mu);text-transform:uppercase}
+.cam{aspect-ratio:16/9;background:#050a14;border-radius:10px;position:relative;overflow:hidden;display:grid;place-items:center;color:#9fb0cf}
+.cam img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.cam .b{position:absolute;top:10px;left:10px;z-index:2}
+.note{background:var(--wnb);color:var(--wn);padding:10px 12px;border-radius:8px;font-size:12px;margin-bottom:14px}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px}.row input,.row select{width:auto}
+.bar{height:8px;background:var(--bg);border-radius:9px;overflow:hidden}.bar i{display:block;height:100%;background:var(--navy2)}
+.al{display:flex;gap:10px;padding:10px 0;border-bottom:1px solid var(--bd);align-items:center}.al:last-child{border:0}.al div{flex:1}.al small{color:var(--mu)}
+.seat{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}.seat div{padding:10px 4px;text-align:center;border-radius:8px;font-size:11px;font-weight:700}
+.cols{display:flex;gap:8px;align-items:flex-end;height:120px}.cols i{flex:1;background:var(--navy2);border-radius:5px 5px 0 0;position:relative}.cols i:nth-child(3n){background:var(--gr)}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;place-items:center;z-index:9}.modal.on{display:grid}.modal .c{max-width:380px}
+@media(max-width:900px){
+#login{grid-template-columns:1fr}.hero{display:none}#app{grid-template-columns:70px 1fr}aside .logo small,.nav span{display:none}.nav{padding:10px 6px;text-align:center}.g2{grid-template-columns:1fr}.top input{display:none}}
+.emp{color:var(--mu);padding:20px;text-align:center}.seat{min-height:40px}.btn:disabled{opacity:.45;cursor:not-allowed}a.btn{display:inline-block}
+</style></head><body>
+<div id="app"><aside id="side"></aside><main><div class="top"><div style="flex:1"><div class="crumb" id="crumb"></div><h1 id="title"></h1></div>
+<input id="gs" placeholder="Search…" aria-label="Search"><button class="btn s" id="th" title="Theme">◐</button><div class="user"><div class="av" id="av"></div><span id="un"></span></div></div>
+<div id="view"><div class="emp">Loading…</div></div></main></div>
+
+<div class="modal" id="md"><div class="c"><h3 id="mt">Confirm</h3><p id="mp" style="margin-bottom:16px"></p><div class="row" style="justify-content:flex-end;margin:0"><button class="btn s" onclick="md.classList.remove('on')">Cancel</button><button class="btn" id="mok">Confirm</button></div></div></div>
+
+<script>
+const $=s=>document.querySelector(s),esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const T=(c,t)=>`<span class="tag t-${c}">${esc(t)}</span>`;
+const LOGO='/static/must_logo.webp';
+let role='doctor',page='',me={},S={tracks:[],robot:{},exam_control:{}},ALERTS=[],OV={},STU=[],STU_TOTAL=0,EX=[],ROOMS=[],COL=[],USERS=[],REP={incidents_by_day:[],audit:[],exam_status:{}},SQ={q:'',college:'',page:1},pend=null;
+const api=(u,o)=>fetch(u,o).then(r=>{if(r.status==401){location='/login';throw 0}return r.json()});
+const post=(u,b)=>api(u,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(b||{})});
+const NAV={doctor:['Dashboard','Live Monitoring','Alerts & Incidents','Robot Status','My Students'],admin:['Overview','Students','Examinations','Rooms & Devices','Colleges','Users & Roles','Reports']};
+const tbl=(h,r)=>`<div class="tw"><table><tr>${h.map(x=>`<th>${x}</th>`).join('')}</tr>${r.map(x=>`<tr>${x.map(y=>`<td>${y}</td>`).join('')}</tr>`).join('')}</table></div>`;
+const kp=(a,b)=>`<div class="c k"><b>${esc(a)}</b><span>${esc(b)}</span></div>`;
+const st=s=>T({Scheduled:'mu',Active:'ok',Completed:'mu',Cancelled:'dg'}[s]||'mu',s);
+const lnk='style="color:var(--red);font-weight:700"';
+function confirmBox(t,p,fn){$('#mt').textContent=t;$('#mp').textContent=p;pend=fn;md.classList.add('on')}
+$('#mok').onclick=()=>{md.classList.remove('on');if(pend)pend()};
+const fail=d=>{if(d&&d.ok===false)alert(d.error||'Request failed');return d};
+
+/* ---------- doctor (live data from dashboard.py) ---------- */
+const tr=()=>S.tracks||[];
+const ec=()=>S.exam_control||{};
+const kpisD=()=>kp(tr().length,'Students detected')+kp(S.fps!=null?Math.round(S.fps):'—','Frames per second')+kp(ALERTS.filter(a=>!a.reviewed).length,'Incidents to review')+kp(ec().paused?'Paused':(S.is_setup_complete===false?'Calibrating':'Running'),'AI status')+kp(S.robot&&S.robot.sweeping?'Sweeping':'Idle','Robot');
+const robotK=()=>{const r=S.robot||{};return kp(r.papers??'—','Papers detected')+kp(r.pan??'—','Pan (degrees)')+kp(r.tilt??'—','Tilt (degrees)')+kp(r.sweeping?'Sweeping':'Idle','Activity')};
+const feed=()=>`<div class="cam"><span class="b" id="fb">${T('wn','CONNECTING…')}</span><img src="/video_feed" onload="$('#fb').innerHTML=T('ok','● LIVE')" onerror="this.remove();$('#fb').innerHTML=T('dg','NO FEED')"><span>Class camera</span></div>`;
+const stuList=()=>tr().length?tr().map(t=>{const l=t.is_suspicious?['dg','Suspected — review']:t.score>0?['wn','Watch']:['ok','Normal'];return `<div class="al"><div><b>${esc(t.name)}</b><br><small>${esc(t.student_id)} · Track #${t.track_id} · score ${t.score}</small></div>${T(l[0],l[1])}</div>`}).join(''):'<div class="emp">No students detected yet…</div>';
+const seat=()=>tr().length?tr().map(t=>{const c=t.is_suspicious?'dg':t.score>0?'wn':'ok';return `<div style="background:var(--${c}b);color:var(--${c})">${esc(t.student_id)}</div>`}).join(''):'<div class="emp" style="grid-column:1/-1">No students detected yet…</div>';
+const alertRows=()=>ALERTS.length?tbl(['Time','Event','Snapshot','Status','Action'],ALERTS.map(a=>[esc(a.time),esc(a.event),`<a href="${esc(a.url)}" target="_blank" rel="noopener" ${lnk}>Open</a>`,a.reviewed?T('ok','Reviewed'):T('wn','Needs review'),a.reviewed?'—':`<button class="btn s" onclick="confirmBox('Mark as reviewed?','A doctor must check the snapshot first. AI alerts are suspicions, not decisions.',()=>review('${esc(a.file)}'))">Review</button>`])):'<div class="emp">No incidents recorded yet.</div>';
+const review=f=>post('/api/alerts/'+encodeURIComponent(f)+'/review').then(fail).then(()=>poll());
+const ctl=a=>post('/api/'+a).then(()=>poll());
+const note='<div class="note">AI alerts are suspicions that need human review. No student is accused or penalised automatically.</div>';
+function dyn(){const set=(i,h)=>{const e=$(i);if(e)e.innerHTML=h};set('#kpis',kpisD());set('#stuList',stuList());set('#robotK',robotK());set('#alTbl',alertRows());set('#seat',seat());
+set('#pb',ec().paused?`<div class="note">⏸ ${esc(ec().alert_message||'Monitoring paused.')} <button class="btn" style="margin-left:10px" onclick="ctl('resume')">Resume</button></div>`:'');
+const fb=$('#fb');if(fb&&S.fps>0&&fb.textContent.includes('CONNECTING'))fb.innerHTML=T('ok','● LIVE')}
+async function poll(){try{S=await api('/api/status');ALERTS=(await api('/api/alerts')).alerts}catch(e){}dyn()}
+
+/* ---------- admin (data from admin_db.py) ---------- */
+const exRows=()=>EX.map(e=>[esc(e.subject),esc(e.college),esc(e.room),esc(e.doctor),esc(e.starts_at.replace('T',' ')),st(e.status),e.students,['Scheduled','Active'].includes(e.status)?`<button class="btn s" onclick="confirmBox('Cancel examination?','The doctor and assigned students will see it as cancelled.',()=>cancelEx(${e.id}))">Cancel</button>`:'—']);
+const roomSt=s=>T(s=='Online'?'ok':s=='Offline'?'dg':'wn',s);
+const loadStu=()=>api(`/api/admin/students?q=${encodeURIComponent(SQ.q)}&college=${encodeURIComponent(SQ.college)}&page=${SQ.page}&per=10`).then(d=>{STU=d.items;STU_TOTAL=d.total});
+const loadAll=()=>Promise.all([api('/api/admin/overview').then(d=>OV=d),loadStu(),api('/api/exams').then(d=>EX=d.items),api('/api/admin/rooms').then(d=>ROOMS=d.items),api('/api/admin/colleges').then(d=>COL=d.items),api('/api/admin/users').then(d=>USERS=d.items),api('/api/admin/reports').then(d=>REP=d)]);
+const reload=()=>loadAll().then(()=>show(page));
+const cancelEx=id=>post('/api/admin/exams/'+id+'/cancel').then(fail).then(reload);
+function saveExam(){const g=i=>$('#'+i).value;post('/api/admin/exams',{subject:g('ex_sub'),doctor:g('ex_doc'),room:g('ex_room'),college:g('ex_col'),year:g('ex_yr'),starts_at:g('ex_dt')}).then(fail).then(d=>{if(d.ok){if(d.over_capacity)alert('Warning: '+d.students+' students exceed this room’s capacity.');reload()}})}
+function addStudent(){const n=prompt('Full name');if(!n)return;const i=prompt('University ID (e.g. 2023/10412)');if(!i)return;const c=prompt('College (exact name)\n'+COL.map(x=>x.name).join(', '));if(!c)return;const d=prompt('Department')||'';const y=prompt('Academic year (1-7)','1');post('/api/admin/students',{name:n,student_id:i,college:c,department:d,year:y}).then(fail).then(reload)}
+function addCollege(){const n=prompt('College name');if(n)post('/api/admin/colleges',{name:n}).then(fail).then(reload)}
+function addDept(){const c=prompt('College (exact name)\n'+COL.map(x=>x.name).join(', '));const n=c&&prompt('Department name');if(n)post('/api/admin/departments',{college:c,name:n}).then(fail).then(reload)}
+const opts=(a,sel)=>a.map(x=>`<option${x==sel?' selected':''}>${esc(x)}</option>`).join('');
+
+const V={
+'doctor:Dashboard':()=>`<div id="pb"></div><div class="g g4" id="kpis">${kpisD()}</div>
+<div class="g g2" style="margin-top:16px"><div class="c"><h3>Live view</h3>${feed()}</div><div class="c"><h3>Students</h3><div id="stuList">${stuList()}</div></div></div>
+<div class="c" style="margin-top:16px"><h3>Latest incidents</h3><div id="alTbl">${alertRows()}</div></div>`,
+'doctor:Live Monitoring':()=>`${note}<div id="pb"></div><div class="g g2"><div class="c">${feed()}<div class="row" style="margin-top:12px"><button class="btn s" onclick="ctl('pause')">⏸ Pause AI</button><button class="btn s" onclick="ctl('resume')">▶ Resume</button></div></div><div class="c"><h3>Students in room</h3><div id="stuList">${stuList()}</div></div></div>`,
+'doctor:Alerts & Incidents':()=>`${note}<div class="c"><h3>Incident history</h3><div id="alTbl">${alertRows()}</div></div>`,
+'doctor:Robot Status':()=>`<div class="g g4" id="robotK">${robotK()}</div><div class="g g2" style="margin-top:16px"><div class="c"><h3>Robot camera</h3><div class="cam"><img src="/robot_feed" onerror="this.remove()"><span>Robot camera feed</span></div></div><div class="c"><h3>Devices</h3>${tbl(['Device','State'],[['Class camera',S.fps>0?T('ok','Online'):T('dg','Offline')],['Robot camera',S.robot&&S.robot.papers!=null?T('ok','Online'):T('wn','Unknown')]])}</div></div>`,
+'doctor:My Students':()=>`<div class="c"><h3>Detected students</h3><div class="seat" id="seat">${seat()}</div></div>`,
+'admin:Overview':()=>`<div class="g g4">${kp(OV.colleges,'Colleges')}${kp(OV.departments,'Departments')}${kp(OV.rooms,'Exam rooms')}${kp(OV.students,'Students registered')}${kp(OV.exams_scheduled,'Scheduled exams')}${kp(OV.devices_online+' / '+OV.devices_total,'Devices online')}${kp(OV.incidents,'Incident snapshots')}</div>
+<div class="g g2" style="margin-top:16px"><div class="c"><h3>Examinations</h3>${tbl(['Subject','College','Room','When','Status'],exRows().map(r=>[r[0],r[1],r[2],r[4],r[5]]))}</div><div class="c"><h3>Device alerts</h3>${ROOMS.filter(r=>r.status!='Online').map(r=>`<div class="al"><div>Room ${esc(r.code)}<br><small>${esc(r.status)}</small></div>${T(r.status=='Offline'?'dg':'wn',r.status=='Offline'?'High':'Medium')}</div>`).join('')||'<div class="emp">All devices online.</div>'}</div></div>
+<p style="color:var(--mu);margin-top:14px;font-size:12px">Prototype data: seeded sample records until you replace them.</p>`,
+'admin:Students':()=>{const pages=Math.max(1,Math.ceil(STU_TOTAL/10));return `<div class="row"><select onchange="SQ.college=this.value;SQ.page=1;loadStu().then(()=>show('Students'))"><option value="">All colleges</option>${opts(COL.map(c=>c.name),SQ.college)}</select><span style="color:var(--mu)">${SQ.q?'Search: “'+esc(SQ.q)+'”':'Use the top search box'}</span><button class="btn" style="margin-left:auto" onclick="addStudent()">+ Add student</button></div><div class="c">${STU.length?tbl(['Name','University ID','College','Department','Year'],STU.map(s=>[esc(s.name),esc(s.student_id),esc(s.college),esc(s.department),s.year])):'<div class="emp">No students found.</div>'}<div class="row" style="margin:12px 0 0;justify-content:space-between"><span style="color:var(--mu)">${STU_TOTAL} students · page ${SQ.page} of ${pages}</span><span><button class="btn s" ${SQ.page<=1?'disabled':''} onclick="SQ.page--;loadStu().then(()=>show('Students'))">‹</button> <button class="btn s" ${SQ.page>=pages?'disabled':''} onclick="SQ.page++;loadStu().then(()=>show('Students'))">›</button></span></div></div>`},
+'admin:Examinations':()=>`<div class="g g2"><div class="c"><h3>Schedule</h3>${tbl(['Subject','College','Room','Doctor','When','Status','Students','Action'],exRows())}</div>
+<div class="c"><h3>New examination</h3><label>Subject</label><input id="ex_sub"><label>Doctor</label><input id="ex_doc"><label>College (students are assigned automatically)</label><select id="ex_col">${opts(COL.map(c=>c.name))}</select><label>Academic year</label><select id="ex_yr"><option value="">All years</option>${[1,2,3,4,5].map(y=>`<option>${y}</option>`).join('')}</select><label>Room</label><select id="ex_room">${ROOMS.map(r=>`<option value="${esc(r.code)}">${esc(r.code)} (capacity ${r.capacity})</option>`).join('')}</select><label>Date &amp; time</label><input id="ex_dt" type="datetime-local">
+<button class="btn w" onclick="saveExam()">Schedule exam</button></div></div>`,
+'admin:Rooms & Devices':()=>`<div class="c">${tbl(['Room','Building','College','Capacity','Cameras','Robot','Status'],ROOMS.map(r=>[esc(r.code),esc(r.building),esc(r.college),r.capacity,'Cam ×'+r.cameras,esc(r.robot||'—'),roomSt(r.status)]))}</div>`,
+'admin:Colleges':()=>`<div class="g g4">${COL.map(c=>`<div class="c k"><b>${esc(c.name)}</b><span>${c.departments} departments · ${c.rooms} rooms · ${c.students} students</span></div>`).join('')}</div><div class="row" style="margin-top:16px"><button class="btn" onclick="addCollege()">+ Add college</button><button class="btn s" onclick="addDept()">+ Add department</button></div>`,
+'admin:Users & Roles':()=>`<div class="c">${tbl(['Username','Role','Name','Access'],USERS.map(u=>[esc(u.username),esc(u.role),esc(u.display),u.role=='admin'?T('ok','Full'):T('mu','Monitoring only')]))}<p style="color:var(--mu);margin-top:12px;font-size:12px">Accounts are set in the server .env file.</p></div>`,
+'admin:Reports':()=>{const d=REP.incidents_by_day,mx=Math.max(1,...d.map(x=>x.count));return `<div class="g g2"><div class="c"><h3>Incident snapshots — last 7 days</h3><div class="cols">${d.map(x=>`<i style="height:${Math.max(4,x.count/mx*100)}%" title="${x.day}: ${x.count}"></i>`).join('')}</div><div class="row" style="margin:8px 0 0;justify-content:space-between;color:var(--mu);font-size:11px">${d.map(x=>`<span>${x.day.slice(5)}</span>`).join('')}</div></div><div class="c"><h3>Export</h3><div class="row"><button class="btn" onclick="print()">Print / PDF</button><a class="btn s" href="/api/admin/export/exams.csv" style="text-decoration:none">Exams CSV</a><a class="btn s" href="/api/admin/export/incidents.csv" style="text-decoration:none">Incidents CSV</a></div><p style="color:var(--mu)">Exams: ${Object.entries(REP.exam_status).map(([k,v])=>k+' '+v).join(' · ')||'none'}</p></div></div><div class="c" style="margin-top:16px"><h3>Audit log</h3>${tbl(['Time','User','Action'],REP.audit.map(a=>[esc(a.at),esc(a.user),esc(a.action)]))}</div>`}
+};
+function show(p){page=p;$('#title').textContent=p;$('#crumb').innerHTML='Home<b>→</b>'+(role=='doctor'?'Doctor':'Administrator');document.querySelectorAll('.nav').forEach(n=>n.classList.toggle('on',n.dataset.p==p));$('#view').innerHTML=V[role+':'+p]()}
+$('#gs').onkeydown=e=>{if(e.key=='Enter'&&role=='admin'){SQ.q=e.target.value.trim();SQ.page=1;loadStu().then(()=>show('Students'))}};
+$('#th').onclick=()=>{const r=document.documentElement,d=getComputedStyle(r).getPropertyValue('--bg').trim()=='#0b1322';r.dataset.theme=d?'light':'dark'};
+(async()=>{me=await api('/api/me');role=me.role;
+$('#side').innerHTML=`<div class="logo"><img alt="MUST" src="${LOGO}"><div>Smart Exam<small>${role=='doctor'?'Doctor':'Administrator'}</small></div></div>`+NAV[role].map(p=>`<button class="nav" data-p="${p}" onclick="show('${p}')"><span>${p}</span></button>`).join('')+`<button class="nav out" onclick="location='/logout'"><span>Log out</span></button>`;
+$('#un').textContent=me.display;$('#av').textContent=me.display.slice(0,2).toUpperCase();
+if(role=='admin'){await loadAll()}else{$('#gs').placeholder='Search students…';await poll();setInterval(poll,3000)}
+show(NAV[role][0])})();
+</script></body></html>
+{% endraw %}

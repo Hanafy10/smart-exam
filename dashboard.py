@@ -10,6 +10,7 @@ Run: python dashboard.py
 Open: http://127.0.0.1:5001
 """
 import os
+import hmac
 import time
 import threading
 import traceback
@@ -19,7 +20,8 @@ from dotenv import load_dotenv
 
 import cv2
 import numpy as np
-from flask import Flask, Response, render_template, jsonify, send_from_directory, request
+from flask import (Flask, Response, render_template, jsonify, send_from_directory,
+                   request, session, redirect, url_for)
 from flask_socketio import SocketIO, emit, join_room, leave_room
 from functools import wraps
 
@@ -31,6 +33,7 @@ from boundary_zones import DeskZoneManager, BoundaryZoneAnalyzer, ZoneThresholds
 from object_detector import ObjectDetector, PaperDetector
 from scoring_system import StudentScoringEngine, ScoringRules
 from robot_controller import RobotController
+from admin_db import init_db, create_blueprint
 
 # ── Configuration ─────────────────────────────────────────────────────────────
 load_dotenv()
@@ -47,6 +50,8 @@ os.makedirs(EVIDENCE_DIR, exist_ok=True)
 
 app = Flask(__name__)
 app.config["SECRET_KEY"] = os.getenv("SECRET_KEY", "change-me-in-production")
+app.config["SESSION_COOKIE_HTTPONLY"] = True
+app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
 _cors = os.getenv("CORS_ALLOWED_ORIGINS")
 if _cors:
     _cors_list = [c.strip() for c in _cors.split(",")]
@@ -573,29 +578,117 @@ def detection_loop():
 
 # ── Flask routes ─────────────────────────────────────────────────────────────
 
-# ── Basic Auth (Proctor-only) ─────────────────────────────────────────────────
-def check_auth(username, password):
-    expected_user = os.getenv('PROCTOR_USERNAME', 'proctor')
-    expected_pass = os.getenv('PROCTOR_PASSWORD', 'change-me-securely')
-    return username == expected_user and password == expected_pass
+# ── Authentication & roles (MUST dashboard) ───────────────────────────────────
+# Two roles: "admin" (university data) and "doctor" (exam monitoring).
+# Set real credentials in .env — see README_UPDATE.md. Basic-auth is still
+# accepted so old scripts that used PROCTOR_USERNAME/PASSWORD keep working.
+def _accounts():
+    d_user = os.getenv("DOCTOR_USERNAME", os.getenv("PROCTOR_USERNAME", "doctor"))
+    d_pass = os.getenv("DOCTOR_PASSWORD", os.getenv("PROCTOR_PASSWORD", "change-me-securely"))
+    return {
+        os.getenv("ADMIN_USERNAME", "admin"): {
+            "role": "admin", "display": "Admin Office",
+            "password": os.getenv("ADMIN_PASSWORD", "change-me-securely")},
+        d_user: {"role": "doctor", "display": "Doctor", "password": d_pass},
+    }
+
+
+def list_accounts():
+    return [{"username": u, "role": a["role"], "display": a["display"]}
+            for u, a in _accounts().items()]
+
+
+def authenticate(username, password):
+    acct = _accounts().get(username or "")
+    if acct and hmac.compare_digest(str(password or ""), acct["password"]):
+        return {"username": username, "role": acct["role"], "display": acct["display"]}
+    return None
+
+
+def get_user():
+    if session.get("user"):
+        return session["user"]
+    ba = request.authorization
+    if ba:
+        return authenticate(ba.username, ba.password)
+    return None
+
+
+def _deny():
+    if request.path.startswith(("/api/", "/video_feed", "/robot_feed", "/evidence/")):
+        return Response("Authentication required", 401,
+                        {"WWW-Authenticate": 'Basic realm="Smart Exam"'})
+    return redirect(url_for("login", next=request.path))
+
 
 def requires_auth(f):
+    """Any signed-in user (doctor or admin)."""
     @wraps(f)
     def decorated(*args, **kwargs):
-        auth_req = request.authorization
-        if not auth_req or not check_auth(auth_req.username, auth_req.password):
-            return Response(
-                'Authentication required for proctor access',
-                401,
-                {'WWW-Authenticate': 'Basic realm="Proctor Login"'}
-            )
+        if not get_user():
+            return _deny()
         return f(*args, **kwargs)
     return decorated
 
+
+def requires_role(*roles):
+    def deco(f):
+        @wraps(f)
+        def decorated(*args, **kwargs):
+            u = get_user()
+            if not u:
+                return _deny()
+            if u["role"] not in roles:
+                return jsonify({"ok": False, "error": "forbidden for your role"}), 403
+            return f(*args, **kwargs)
+        return decorated
+    return deco
+
+
 @app.route("/")
-@requires_auth
 def index():
+    return redirect(url_for("dashboard_page" if get_user() else "login"))
+
+
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    error = ""
+    if request.method == "POST":
+        user = authenticate(request.form.get("username", "").strip(), request.form.get("password", ""))
+        if user:
+            session.clear()
+            session["user"] = user
+            nxt = request.args.get("next", "")
+            return redirect(nxt if nxt.startswith("/") and not nxt.startswith("//") else url_for("dashboard_page"))
+        error = "Wrong username or password."
+    return render_template("login.html", error=error), (401 if error else 200)
+
+
+@app.route("/logout")
+def logout():
+    session.clear()
+    return redirect(url_for("login"))
+
+
+@app.route("/app")
+@requires_auth
+def dashboard_page():
+    """Final MUST-branded dashboard (doctor or admin view, decided by the account)."""
+    return render_template("must_dashboard.html")
+
+
+@app.route("/console")
+@requires_auth
+def console():
+    """Original operator console (calibration, pause/resume, assign IDs)."""
     return render_template("index.html")
+
+
+@app.route("/monitor")
+@requires_auth
+def monitor():
+    """Lighter monitor view: camera + student roster (ID + names)."""
+    return render_template("monitor.html")
 
 
 @app.route("/video_feed")
@@ -631,6 +724,7 @@ def api_status():
 
 
 @app.route("/api/assign_student", methods=["POST"])
+@requires_auth
 def assign_student():
     data = request.get_json()
     track_id = int(data.get("track_id", -1))
@@ -673,6 +767,8 @@ def evidence_file(filename):
 # ── WebSocket events ─────────────────────────────────────────────────────────
 @socketio.on("connect")
 def on_connect():
+    if not get_user():          # WebSocket needs a signed-in session too
+        return False
     print("[ws] client connected")
 
 
@@ -721,10 +817,15 @@ def on_assign(data):
                            "student_id": student_id, "name": name})
 
 
+init_db()
+app.register_blueprint(create_blueprint(requires_auth, requires_role, get_user,
+                                        EVIDENCE_DIR, list_accounts))
+
+
 if __name__ == "__main__":
     t = threading.Thread(target=detection_loop, daemon=True)
     t.start()
-    print("Dashboard → http://127.0.0.1:5001")
+    print("MUST dashboard → http://127.0.0.1:5001  (login: /login)")
     print(f"Stable camera index: {STABLE_INDEX} | Robot camera index: {ROBOT_INDEX}")
     _host = os.getenv("FLASK_HOST", "127.0.0.1")
     _port = int(os.getenv("FLASK_PORT", "5001"))
