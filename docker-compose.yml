@@ -32,8 +32,8 @@ services:
     ports:
       - "3000:3000"
     environment:
-      - NEXT_PUBLIC_API_URL=http://localhost:8000
-      - NEXT_PUBLIC_WS_URL=ws://localhost:8000/ws/dashboard
+      - NEXT_PUBLIC_API_URL=http://192.168.1.9:8000
+      - NEXT_PUBLIC_WS_URL=ws://192.168.1.9:8000/ws/dashboard
     depends_on:
       backend:
         condition: service_healthy
@@ -54,6 +54,8 @@ services:
     volumes:
       - ./evidence:/app/evidence
     restart: unless-stopped
+    devices:
+      - /dev/video0:/dev/video0
 
 volumes:
   db_data:

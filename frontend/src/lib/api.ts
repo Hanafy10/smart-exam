@@ -1,6 +1,5 @@
 import { User, ExamRoom, Invigilator, RoomMonitoringSummary, ViolationEvent } from './types';
-
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+const API_BASE =process.env.NEXT_PUBLIC_API_URL || 'http://192.168.1.9:8000';
 
 let refreshHandler: (() => Promise<string | null>) | null = null;
 
@@ -173,11 +172,16 @@ export async function getMyRoomEvents(limit = 50): Promise<ViolationEvent[]> {
   return res.json();
 }
 
+
 export function getVideoFeedUrl(token?: string | null): string {
-  const base = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+  const base =
+    process.env.NEXT_PUBLIC_API_URL || 'http://192.168.1.9:8000';
+
   if (!token) return `${base}/api/monitoring/video-feed`;
+
   return `${base}/api/monitoring/video-feed?token=${encodeURIComponent(token)}`;
 }
+
 
 export async function pauseExam(reason = 'Proctor paused exam') {
   const res = await apiRequest(`/api/exams/pause?reason=${encodeURIComponent(reason)}`, {

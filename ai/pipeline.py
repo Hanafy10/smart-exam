@@ -22,7 +22,7 @@ from ai.scoring_system import StudentScoringEngine, ScoringRules
 from ai.event_generator import EventGenerator
 
 CAMERA_INDEX = int(os.environ.get("CAMERA_INDEX", "0"))
-BACKEND_URL = os.environ.get("BACKEND_URL", "http://localhost:8000")
+BACKEND_URL = os.environ.get("BACKEND_URL", "http://192.168.1.9:8000")
 BRIGHTNESS_ALPHA = 1.3
 BRIGHTNESS_BETA = 20
 DISPLAY_GUI = os.environ.get("DISPLAY_GUI", "true").lower() == "true"

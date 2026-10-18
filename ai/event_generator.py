@@ -10,7 +10,7 @@ class EventGenerator:
     Dispatches violation events, live frames, and periodic status heartbeats
     from the AI Pipeline to the Backend FastAPI server via room-scoped HTTP POST endpoints.
     """
-    def __init__(self, backend_url: str = "http://localhost:8000", room_id: Optional[int] = None):
+    def __init__(self, backend_url: str = "http://192.168.1.9:8000", room_id: Optional[int] = None):
         self.backend_url = backend_url.rstrip("/")
         self.room_id = room_id if room_id is not None else int(os.environ.get("ROOM_ID", "1"))
         self.events_endpoint = f"{self.backend_url}/api/monitoring/ai/event"

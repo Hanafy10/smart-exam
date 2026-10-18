@@ -1,0 +1,82 @@
+
+import cv2
+
+
+# Hardcoded DroidCam URL
+DROIDCAM_URL = "http://192.168.1.6:4747/video"
+
+
+class CameraCapture:
+    """
+    Wrapper class for reading frames from DroidCam over Wi-Fi.
+
+    Replace DROIDCAM_URL with the IP and port displayed in the DroidCam app.
+    """
+
+    def __init__(
+        self,
+        width: int = 1280,
+        height: int = 720,
+        fps: int = 30
+    ):
+        self.width = width
+        self.height = height
+        self.fps = fps
+        self.cap = None
+
+    def start(self):
+        """Open the camera and configure resolution + FPS."""
+        self.cap = cv2.VideoCapture(0)
+
+        if not self.cap.isOpened():
+            self.cap.release()
+            self.cap = None
+            raise RuntimeError(
+                f"Could not connect to DroidCam at {DROIDCAM_URL}.\n"
+                "Check that DroidCam is running and the IP address and port are correct."
+            )
+
+        self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, self.width)
+        self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, self.height)
+        self.cap.set(cv2.CAP_PROP_FPS, self.fps)
+
+        # Auto-exposure — helps in dim environments
+        self.cap.set(cv2.CAP_PROP_AUTO_EXPOSURE, 1)
+
+        # Log what we actually got (camera may not honour the request exactly)
+        actual_w = int(self.cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+        actual_h = int(self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+        actual_fps = int(self.cap.get(cv2.CAP_PROP_FPS))
+
+        print(
+            f"[CameraCapture] Connected to DroidCam — "
+            f"{actual_w}x{actual_h} @ {actual_fps}fps"
+        )
+
+        return self
+
+    def read(self):
+        """
+        Read a single frame from the camera.
+        Returns (success: bool, frame: np.ndarray or None)
+        """
+        if self.cap is None:
+            raise RuntimeError("Camera not started. Call start() first.")
+
+        success, frame = self.cap.read()
+        return success, frame
+
+    def is_opened(self) -> bool:
+        return self.cap is not None and self.cap.isOpened()
+
+    def release(self):
+        """Release the camera resource."""
+        if self.cap is not None:
+            self.cap.release()
+            self.cap = None
+
+    def __enter__(self):
+        return self.start()
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.release()

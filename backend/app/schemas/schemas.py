@@ -1,8 +1,11 @@
 from datetime import datetime
-from typing import Optional, List, Any
-from pydantic import BaseModel, Field
+from typing import Optional, List
 
-# Auth schemas
+from pydantic import BaseModel, Field, ConfigDict
+
+
+# Authentication
+
 class Token(BaseModel):
     access_token: str
     refresh_token: str
@@ -10,14 +13,19 @@ class Token(BaseModel):
     role: str
     assigned_room_id: Optional[int] = None
 
+
 class LoginRequest(BaseModel):
     username: str
     password: str
 
+
 class RefreshRequest(BaseModel):
     refresh_token: str
 
+
 class UserOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: int
     username: str
     email: Optional[str] = None
@@ -26,22 +34,25 @@ class UserOut(BaseModel):
     assigned_room_id: Optional[int] = None
     assigned_room_name: Optional[str] = None
 
-    class Config:
-        from_attributes = True
 
-# Admin invigilator management
+# Invigilator management
+
 class InvigilatorCreate(BaseModel):
     username: str = Field(..., min_length=3, max_length=50)
     password: str = Field(..., min_length=6, max_length=128)
     email: Optional[str] = None
     assigned_room_id: int
 
+
 class InvigilatorUpdate(BaseModel):
     is_active: Optional[bool] = None
     assigned_room_id: Optional[int] = None
     password: Optional[str] = None
 
+
 class InvigilatorOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: int
     username: str
     email: Optional[str] = None
@@ -51,41 +62,43 @@ class InvigilatorOut(BaseModel):
     assigned_room_name: Optional[str] = None
     created_at: datetime
 
-    class Config:
-        from_attributes = True
 
-# Exam Room schemas
+# Exam rooms and cameras
+
 class ExamRoomCreate(BaseModel):
     name: str = Field(..., min_length=2, max_length=100)
     building: Optional[str] = None
     capacity: Optional[int] = 30
 
+
 class CameraCreate(BaseModel):
     name: str
     device_index_or_url: str = "0"
 
+
 class CameraOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: int
     room_id: int
     name: str
     is_online: bool
     last_seen: Optional[datetime] = None
 
-    class Config:
-        from_attributes = True
 
 class ExamRoomOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: int
     name: str
     building: Optional[str] = None
     capacity: int
-    cameras: List[CameraOut] = []
+    cameras: List[CameraOut] = Field(default_factory=list)
     invigilator_count: Optional[int] = 0
 
-    class Config:
-        from_attributes = True
 
-# Monitoring schemas (Assigned room only)
+# Monitoring
+
 class RoomMonitoringSummary(BaseModel):
     room_id: int
     room_name: str
@@ -93,11 +106,13 @@ class RoomMonitoringSummary(BaseModel):
     total_students: int
     suspicious_students: int
     total_violations: int
-    violence_detection_status: str = "unavailable"  # Honest status
+    violence_detection_status: str = "unavailable"
     camera_online: bool
     is_paused: bool
 
-# Events from AI Pipeline
+
+# Events from the AI pipeline
+
 class AIEventCreate(BaseModel):
     room_id: int
     camera_id: Optional[int] = None
@@ -114,6 +129,7 @@ class AIEventCreate(BaseModel):
     is_violence: Optional[bool] = False
     severity: Optional[str] = "medium"
 
+
 class AITrackState(BaseModel):
     track_id: int
     head_yaw: float = 0.0
@@ -124,13 +140,17 @@ class AITrackState(BaseModel):
     score: float = 0.0
     presence_state: str = "present"
 
+
 class AIStatusSync(BaseModel):
     room_id: int
     live_student_count: int
     fps: int
-    tracks: List[AITrackState] = []
+    tracks: List[AITrackState] = Field(default_factory=list)
+
 
 class ViolationEventOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: int
     room_id: int
     camera_id: Optional[int] = None
@@ -142,15 +162,16 @@ class ViolationEventOut(BaseModel):
     evidence_url: Optional[str] = None
     timestamp: datetime
 
-    class Config:
-        from_attributes = True
 
 class StudentAssignRequest(BaseModel):
     track_id: int
     student_college_id: str
     student_name: str
 
+
 class StudentTrackOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     track_id: int
     student_college_id: Optional[str] = None
     student_name: Optional[str] = None
@@ -161,12 +182,14 @@ class StudentTrackOut(BaseModel):
     head_pitch: float
     gaze_direction: str
     zone_status: str
-    events: List[ViolationEventOut] = []
+    events: List[ViolationEventOut] = Field(default_factory=list)
 
-    class Config:
-        from_attributes = True
+
+# Exam status
 
 class ExamStatusOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: int
     room_id: int
     title: str
@@ -175,18 +198,18 @@ class ExamStatusOut(BaseModel):
     pause_reason: Optional[str] = None
     student_count: int
 
-    class Config:
-        from_attributes = True
+
+# Robot status and dispatch
 
 class RobotStatusOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     device_code: str
     status: str
     battery_level: Optional[float] = None
     current_zone: Optional[str] = None
     last_ping: Optional[datetime] = None
 
-    class Config:
-        from_attributes = True
 
 class RobotDispatchCommand(BaseModel):
     target_track_id: int
