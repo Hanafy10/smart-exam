@@ -13,12 +13,13 @@ from backend.app.core.config import (
     ALGORITHM,
     ACCESS_TOKEN_EXPIRE_MINUTES,
     REFRESH_TOKEN_EXPIRE_HOURS,
+    MAX_LOGIN_ATTEMPTS,
+    LOCK_MINUTES,
+    RATE_LIMIT_REQUESTS,
+    RATE_LIMIT_WINDOW_MINUTES,
 )
 from backend.app.core.database import get_db
 from backend.app.models.models import User, UserRole, ExamRoom
-
-MAX_LOGIN_ATTEMPTS = 5
-LOCK_MINUTES = 15
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login")
 pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
@@ -26,7 +27,7 @@ pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
 # Simple in-memory rate limiter: {key: list[datetime]}
 _rate_limit_store: dict[str, list[datetime]] = {}
 
-def _check_rate_limit(key: str, limit: int = 10, window_minutes: int = 1) -> bool:
+def _check_rate_limit(key: str, limit: int = RATE_LIMIT_REQUESTS, window_minutes: int = RATE_LIMIT_WINDOW_MINUTES) -> bool:
     now = datetime.now(timezone.utc)
     window_start = now - timedelta(minutes=window_minutes)
     timestamps = _rate_limit_store.get(key, [])

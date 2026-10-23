@@ -4,7 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
-from backend.app.core.config import EVIDENCE_DIR
+from backend.app.core.config import EVIDENCE_DIR, CORS_ORIGINS
 from backend.app.core.database import init_db
 from backend.app.routers import auth, admin, monitoring, events, exams, robot, ws
 
@@ -27,7 +27,7 @@ app = FastAPI(
 # CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=CORS_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

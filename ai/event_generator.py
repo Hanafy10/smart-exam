@@ -1,17 +1,27 @@
 import os
+from pathlib import Path
 import time
 import base64
 import requests
 import cv2
 from typing import Optional
 
+ROOT_DIR = Path(__file__).resolve().parent.parent
+try:
+    from dotenv import load_dotenv
+    load_dotenv(ROOT_DIR / ".env")
+except ImportError:
+    pass
+
+
 class EventGenerator:
     """
     Dispatches violation events, live frames, and periodic status heartbeats
     from the AI Pipeline to the Backend FastAPI server via room-scoped HTTP POST endpoints.
     """
-    def __init__(self, backend_url: str = "http://192.168.1.9:8000", room_id: Optional[int] = None):
-        self.backend_url = backend_url.rstrip("/")
+    def __init__(self, backend_url: Optional[str] = None, room_id: Optional[int] = None):
+        resolved_url = backend_url or os.environ.get("BACKEND_URL", "http://192.168.1.9:8000")
+        self.backend_url = resolved_url.rstrip("/")
         self.room_id = room_id if room_id is not None else int(os.environ.get("ROOM_ID", "1"))
         self.events_endpoint = f"{self.backend_url}/api/monitoring/ai/event"
         self.sync_endpoint = f"{self.backend_url}/api/monitoring/ai/sync"

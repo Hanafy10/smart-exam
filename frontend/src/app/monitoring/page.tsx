@@ -7,6 +7,7 @@ import {
   getMyRoomSummary,
   getMyRoomEvents,
   getVideoFeedUrl,
+  getMonitoringWsUrl,
   pauseExam,
   resumeExam,
 } from '@/lib/api';
@@ -44,9 +45,7 @@ export default function MonitoringPage() {
   const [selectedEvidence, setSelectedEvidence] = useState<string | null>(null);
 
   // Authenticated WebSocket URL strictly for assigned room
-  const wsUrl = typeof window !== 'undefined'
-    ? `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.hostname}:8000/ws/monitoring?token=${encodeURIComponent(token || '')}`
-    : '';
+  const wsUrl = getMonitoringWsUrl(token);
 
   const {
     isConnected: wsConnected,

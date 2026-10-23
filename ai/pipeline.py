@@ -8,9 +8,17 @@ Captures camera frames, runs multi-modal CV detection:
 - Dispatches AI events to Backend FastAPI via EventGenerator
 """
 import os
+from pathlib import Path
 import time
 import cv2
 import numpy as np
+
+ROOT_DIR = Path(__file__).resolve().parent.parent
+try:
+    from dotenv import load_dotenv
+    load_dotenv(ROOT_DIR / ".env")
+except ImportError:
+    pass
 
 from ai.camera_capture import CameraCapture
 from ai.face_detector import FaceDetector, HeadPoseEstimator
@@ -21,11 +29,20 @@ from ai.object_detector import ObjectDetector
 from ai.scoring_system import StudentScoringEngine, ScoringRules
 from ai.event_generator import EventGenerator
 
-CAMERA_INDEX = int(os.environ.get("CAMERA_INDEX", "0"))
+_raw_cam = os.environ.get("CAMERA_INDEX", "0")
+CAMERA_INDEX = int(_raw_cam) if _raw_cam.isdigit() else _raw_cam
 BACKEND_URL = os.environ.get("BACKEND_URL", "http://192.168.1.9:8000")
-BRIGHTNESS_ALPHA = 1.3
-BRIGHTNESS_BETA = 20
+ROOM_ID = int(os.environ.get("ROOM_ID", "1"))
+BRIGHTNESS_ALPHA = float(os.environ.get("BRIGHTNESS_ALPHA", "1.3"))
+BRIGHTNESS_BETA = int(os.environ.get("BRIGHTNESS_BETA", "20"))
 DISPLAY_GUI = os.environ.get("DISPLAY_GUI", "true").lower() == "true"
+YOLO_MODEL_PATH = os.environ.get("YOLO_MODEL_PATH", "yolov8n.pt")
+PERSON_CONFIDENCE_THRESHOLD = float(os.environ.get("PERSON_CONFIDENCE_THRESHOLD", "0.5"))
+OBJECT_CONFIDENCE_THRESHOLD = float(os.environ.get("OBJECT_CONFIDENCE_THRESHOLD", "0.4"))
+FACE_CONFIDENCE_THRESHOLD = float(os.environ.get("FACE_CONFIDENCE_THRESHOLD", "0.5"))
+SETUP_FRAMES = int(os.environ.get("SETUP_FRAMES", "30"))
+MAX_DISAPPEARED_FRAMES = int(os.environ.get("MAX_DISAPPEARED_FRAMES", "30"))
+SUSPICIOUS_SCORE_THRESHOLD = int(os.environ.get("SUSPICIOUS_SCORE_THRESHOLD", "10"))
 
 class CentroidTracker:
     def __init__(self, max_disappeared: int = 30):
@@ -95,28 +112,28 @@ class CentroidTracker:
 def run_pipeline(display_gui: bool = DISPLAY_GUI):
     print("=" * 60)
     print("Starting Smart Exam AI Pipeline...")
-    print(f"Backend Event Target: {BACKEND_URL}")
+    print(f"Backend Event Target: {BACKEND_URL} (Room {ROOM_ID})")
     print(f"Camera index: {CAMERA_INDEX}")
     print("=" * 60)
 
     # Initialize modules
-    face_detector = FaceDetector()
-    head_pose_est = HeadPoseEstimator()
-    gaze_est = EyeGazeEstimator()
-    person_detector = PersonDetector(confidence_threshold=0.5)
+    face_detector = FaceDetector(min_detection_confidence=FACE_CONFIDENCE_THRESHOLD)
+    head_pose_est = HeadPoseEstimator(min_detection_confidence=FACE_CONFIDENCE_THRESHOLD)
+    gaze_est = EyeGazeEstimator(min_detection_confidence=FACE_CONFIDENCE_THRESHOLD)
+    person_detector = PersonDetector(model_path=YOLO_MODEL_PATH, confidence_threshold=PERSON_CONFIDENCE_THRESHOLD)
     body_pose_est = PoseEstimator()
-    object_detector = ObjectDetector(confidence_threshold=0.4)
+    object_detector = ObjectDetector(model_path=YOLO_MODEL_PATH, confidence_threshold=OBJECT_CONFIDENCE_THRESHOLD)
     thresholds = ZoneThresholds()
-    zone_manager = DeskZoneManager(thresholds=thresholds, setup_frames=30)
+    zone_manager = DeskZoneManager(thresholds=thresholds, setup_frames=SETUP_FRAMES)
     leaning_analyzer = BoundaryZoneAnalyzer(thresholds=thresholds)
-    scoring_engine = StudentScoringEngine(ScoringRules())
-    tracker = CentroidTracker(max_disappeared=30)
-    event_gen = EventGenerator(backend_url=BACKEND_URL)
+    scoring_engine = StudentScoringEngine(ScoringRules(suspicious_score_threshold=SUSPICIOUS_SCORE_THRESHOLD))
+    tracker = CentroidTracker(max_disappeared=MAX_DISAPPEARED_FRAMES)
+    event_gen = EventGenerator(backend_url=BACKEND_URL, room_id=ROOM_ID)
 
     last_event_counts: dict[int, int] = {}
     fps_counter, fps_timer, current_fps, frame_count = 0, time.time(), 0, 0
 
-    with CameraCapture() as camera:
+    with CameraCapture(camera_index=CAMERA_INDEX) as camera:
         print("[AI Pipeline] Camera successfully opened. Processing frames...")
 
         while True:
@@ -289,7 +306,7 @@ def run_pipeline(display_gui: bool = DISPLAY_GUI):
                 tid = p["id"]
                 x1, y1, x2, y2 = p["bbox"]
                 rec = scoring_engine.get_record(tid)
-                color = (0, 0, 255) if rec.score >= 10 else (0, 255, 0)
+                color = (0, 0, 255) if rec.score >= SUSPICIOUS_SCORE_THRESHOLD else (0, 255, 0)
                 cv2.rectangle(display, (x1, y1), (x2, y2), color, 2)
                 cv2.putText(display, f"ID {tid} | {rec.score:.0f}pts", (x1, y1 - 10),
                             cv2.FONT_HERSHEY_SIMPLEX, 0.6, color, 2)

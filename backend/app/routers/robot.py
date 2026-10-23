@@ -1,4 +1,3 @@
-
 from datetime import datetime, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -6,6 +5,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from backend.app.core.config import ROBOT_HEARTBEAT_INTERVAL, ROBOT_OFFLINE_TIMEOUT
 from backend.app.core.database import get_db
 from backend.app.core.security import get_current_user
 from backend.app.models.models import RobotDevice, User
@@ -14,8 +14,8 @@ from backend.app.routers.ws import manager
 
 router = APIRouter(prefix="/api/robot", tags=["robot"])
 
-HEARTBEAT_INTERVAL = 30
-OFFLINE_TIMEOUT = 90
+HEARTBEAT_INTERVAL = ROBOT_HEARTBEAT_INTERVAL
+OFFLINE_TIMEOUT = ROBOT_OFFLINE_TIMEOUT
 
 
 class RobotHealthCheck(BaseModel):

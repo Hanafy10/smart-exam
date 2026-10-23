@@ -1,5 +1,5 @@
 import { User, ExamRoom, Invigilator, RoomMonitoringSummary, ViolationEvent } from './types';
-const API_BASE =process.env.NEXT_PUBLIC_API_URL || 'http://192.168.1.9:8000';
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://192.168.1.9:8000';
 
 let refreshHandler: (() => Promise<string | null>) | null = null;
 
@@ -172,7 +172,6 @@ export async function getMyRoomEvents(limit = 50): Promise<ViolationEvent[]> {
   return res.json();
 }
 
-
 export function getVideoFeedUrl(token?: string | null): string {
   const base =
     process.env.NEXT_PUBLIC_API_URL || 'http://192.168.1.9:8000';
@@ -182,6 +181,24 @@ export function getVideoFeedUrl(token?: string | null): string {
   return `${base}/api/monitoring/video-feed?token=${encodeURIComponent(token)}`;
 }
 
+export function getMonitoringWsUrl(token?: string | null): string {
+  if (!token) return '';
+  const configuredWs = process.env.NEXT_PUBLIC_WS_URL;
+  if (configuredWs) {
+    const baseWs = configuredWs.replace(/\/ws\/(dashboard|monitoring)\/?$/, '').replace(/\/$/, '');
+    return `${baseWs}/ws/monitoring?token=${encodeURIComponent(token)}`;
+  }
+  const apiBase = process.env.NEXT_PUBLIC_API_URL;
+  if (apiBase) {
+    const wsBase = apiBase.replace(/^http/, 'ws').replace(/\/$/, '');
+    return `${wsBase}/ws/monitoring?token=${encodeURIComponent(token)}`;
+  }
+  if (typeof window !== 'undefined') {
+    const proto = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    return `${proto}//${window.location.hostname}:8000/ws/monitoring?token=${encodeURIComponent(token)}`;
+  }
+  return '';
+}
 
 export async function pauseExam(reason = 'Proctor paused exam') {
   const res = await apiRequest(`/api/exams/pause?reason=${encodeURIComponent(reason)}`, {

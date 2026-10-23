@@ -1,20 +1,33 @@
-
+import os
+from pathlib import Path
+from typing import Union
 import cv2
 
+ROOT_DIR = Path(__file__).resolve().parent.parent
+try:
+    from dotenv import load_dotenv
+    load_dotenv(ROOT_DIR / ".env")
+except ImportError:
+    pass
 
-# Built-in camera
-CAMERA_INDEX = 0
+_raw_camera_index = os.environ.get("CAMERA_INDEX", "0")
+CAMERA_INDEX: Union[int, str] = int(_raw_camera_index) if _raw_camera_index.isdigit() else _raw_camera_index
+CAMERA_WIDTH = int(os.environ.get("CAMERA_WIDTH", "1280"))
+CAMERA_HEIGHT = int(os.environ.get("CAMERA_HEIGHT", "720"))
+CAMERA_FPS = int(os.environ.get("CAMERA_FPS", "30"))
 
 
 class CameraCapture:
-    """Wrapper class for reading frames from the built-in camera."""
+    """Wrapper class for reading frames from the configured camera or stream."""
 
     def __init__(
         self,
-        width: int = 1280,
-        height: int = 720,
-        fps: int = 30
+        camera_index: Union[int, str] = CAMERA_INDEX,
+        width: int = CAMERA_WIDTH,
+        height: int = CAMERA_HEIGHT,
+        fps: int = CAMERA_FPS,
     ):
+        self.camera_index = camera_index
         self.width = width
         self.height = height
         self.fps = fps
@@ -22,13 +35,13 @@ class CameraCapture:
 
     def start(self):
         """Open the camera and configure resolution + FPS."""
-        self.cap = cv2.VideoCapture(CAMERA_INDEX)
+        self.cap = cv2.VideoCapture(self.camera_index)
 
         if not self.cap.isOpened():
             self.cap.release()
             self.cap = None
             raise RuntimeError(
-                f"Could not open camera at index {CAMERA_INDEX}. "
+                f"Could not open camera at index/source {self.camera_index}. "
                 "Check camera permissions and Docker device access."
             )
 
@@ -41,7 +54,7 @@ class CameraCapture:
         actual_fps = self.cap.get(cv2.CAP_PROP_FPS)
 
         print(
-            f"[CameraCapture] Connected to built-in camera — "
+            f"[CameraCapture] Connected to camera ({self.camera_index}) — "
             f"{actual_w}x{actual_h} @ {actual_fps:.1f}fps"
         )
 
@@ -68,4 +81,3 @@ class CameraCapture:
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.release()
-

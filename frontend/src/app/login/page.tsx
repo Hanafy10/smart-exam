@@ -5,8 +5,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { ShieldCheck, Lock, User as UserIcon, AlertCircle, ArrowRight } from 'lucide-react';
 
 export default function LoginPage() {
-  const [username, setUsername] = useState('admin');
-  const [password, setPassword] = useState('Admin@12345678');
+  const [username, setUsername] = useState(process.env.NEXT_PUBLIC_DEFAULT_LOGIN_USER || 'admin');
+  const [password, setPassword] = useState(process.env.NEXT_PUBLIC_DEFAULT_LOGIN_PASS || 'Admin@12345678');
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
