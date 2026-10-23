@@ -22,7 +22,6 @@ except ImportError:
 
 from ai.camera_capture import CameraCapture
 from ai.face_detector import FaceDetector, HeadPoseEstimator
-from ai.eye_gaze import EyeGazeEstimator
 from ai.person_detector import PersonDetector, PoseEstimator
 from ai.boundary_zones import DeskZoneManager, BoundaryZoneAnalyzer, ZoneThresholds
 from ai.object_detector import ObjectDetector
@@ -119,7 +118,6 @@ def run_pipeline(display_gui: bool = DISPLAY_GUI):
     # Initialize modules
     face_detector = FaceDetector(min_detection_confidence=FACE_CONFIDENCE_THRESHOLD)
     head_pose_est = HeadPoseEstimator(min_detection_confidence=FACE_CONFIDENCE_THRESHOLD)
-    gaze_est = EyeGazeEstimator(min_detection_confidence=FACE_CONFIDENCE_THRESHOLD)
     person_detector = PersonDetector(model_path=YOLO_MODEL_PATH, confidence_threshold=PERSON_CONFIDENCE_THRESHOLD)
     body_pose_est = PoseEstimator()
     object_detector = ObjectDetector(model_path=YOLO_MODEL_PATH, confidence_threshold=OBJECT_CONFIDENCE_THRESHOLD)
@@ -198,7 +196,7 @@ def run_pipeline(display_gui: bool = DISPLAY_GUI):
             # 3. Full-frame detections
             faces = face_detector.detect(frame)
             head_poses = head_pose_est.estimate(frame)
-            gazes = gaze_est.estimate(frame)
+            gazes = []
             objects = object_detector.detect(frame)
 
             # Spatial mapping: link head poses & gazes to the corresponding person
@@ -228,14 +226,7 @@ def run_pipeline(display_gui: bool = DISPLAY_GUI):
                         head_pose_ok = True
                         matched_hp_idx = best_idx
 
-                # Match gaze to corresponding face
                 gaze_dir, gaze_h_ratio = None, None
-                if gazes and matched_hp_idx is not None and matched_hp_idx < len(gazes):
-                    gaze_dir = gazes[matched_hp_idx]["gaze_direction"]
-                    gaze_h_ratio = gazes[matched_hp_idx]["horizontal_ratio"]
-                elif gazes:
-                    gaze_dir = gazes[0]["gaze_direction"]
-                    gaze_h_ratio = gazes[0]["horizontal_ratio"]
 
                 faces_here = [
                     f for f in faces
