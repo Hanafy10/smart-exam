@@ -1,5 +1,13 @@
 import { User, ExamRoom, Invigilator, RoomMonitoringSummary, ViolationEvent } from './types';
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://192.168.1.9:8000';
+function getRuntimeApiBase(): string {
+  if (typeof window !== 'undefined') {
+    const protocol = window.location.protocol === 'https:' ? 'https:' : 'http:';
+    return `${protocol}//${window.location.hostname}:8000`;
+  }
+  return process.env.NEXT_PUBLIC_API_URL || 'http://192.168.1.9:8000';
+}
+
+const API_BASE = getRuntimeApiBase();
 
 let refreshHandler: (() => Promise<string | null>) | null = null;
 
@@ -173,8 +181,7 @@ export async function getMyRoomEvents(limit = 50): Promise<ViolationEvent[]> {
 }
 
 export function getVideoFeedUrl(token?: string | null): string {
-  const base =
-    process.env.NEXT_PUBLIC_API_URL || 'http://192.168.1.9:8000';
+  const base = API_BASE;
 
   if (!token) return `${base}/api/monitoring/video-feed`;
 
@@ -183,6 +190,10 @@ export function getVideoFeedUrl(token?: string | null): string {
 
 export function getMonitoringWsUrl(token?: string | null): string {
   if (!token) return '';
+  if (typeof window !== 'undefined') {
+    const wsBase = API_BASE.replace(/^http/, 'ws').replace(/\/$/, '');
+    return `${wsBase}/ws/monitoring?token=${encodeURIComponent(token)}`;
+  }
   const configuredWs = process.env.NEXT_PUBLIC_WS_URL;
   if (configuredWs) {
     const baseWs = configuredWs.replace(/\/ws\/(dashboard|monitoring)\/?$/, '').replace(/\/$/, '');
@@ -192,10 +203,6 @@ export function getMonitoringWsUrl(token?: string | null): string {
   if (apiBase) {
     const wsBase = apiBase.replace(/^http/, 'ws').replace(/\/$/, '');
     return `${wsBase}/ws/monitoring?token=${encodeURIComponent(token)}`;
-  }
-  if (typeof window !== 'undefined') {
-    const proto = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    return `${proto}//${window.location.hostname}:8000/ws/monitoring?token=${encodeURIComponent(token)}`;
   }
   return '';
 }

@@ -24,8 +24,6 @@ pip-wheel-metadata/
 
 venv/
 .venv/
-env/
-ENV/
 
 *.jpg
 # =========================
@@ -34,8 +32,7 @@ ENV/
 
 # =========================
 
-.env
-.env.*
+
 !.env.example
 !.env.sample
 
