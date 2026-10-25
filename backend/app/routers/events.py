@@ -44,6 +44,7 @@ async def ingest_ai_event(payload: AIEventCreate, db: AsyncSession = Depends(get
             student_name=f"Student {payload.track_id}",
             score=0.0,
             last_seen=now,
+            image_path='',  # Placeholder, will be updated if evidence is provided
         )
         db.add(student)
         await db.flush()

@@ -164,11 +164,10 @@ class StudentTrack(Base):
     presence_state = Column(String(50), default="present")
     head_yaw = Column(Float, default=0.0)
     head_pitch = Column(Float, default=0.0)
-    gaze_direction = Column(String(50), default="Eyes Center")
     zone_status = Column(String(50), default="safe")
     last_seen = Column(DateTime, default=datetime.utcnow)
     created_at = Column(DateTime, default=datetime.utcnow)
-
+    image_path = Column(String(255), nullable=False)
     exam_session = relationship("ExamSession", back_populates="students")
     events = relationship(
         "ViolationEvent",

@@ -122,7 +122,6 @@ class AIEventCreate(BaseModel):
     evidence_base64: Optional[str] = None
     head_yaw: Optional[float] = 0.0
     head_pitch: Optional[float] = 0.0
-    gaze_direction: Optional[str] = "Eyes Center"
     zone_status: Optional[str] = "safe"
     presence_state: Optional[str] = "present"
     current_score: Optional[float] = None
@@ -134,8 +133,7 @@ class AITrackState(BaseModel):
     track_id: int
     head_yaw: float = 0.0
     head_pitch: float = 0.0
-    gaze_direction: str = "Eyes Center"
-    gaze_baseline_h: float = 0.5
+
     zone_status: str = "safe"
     score: float = 0.0
     presence_state: str = "present"
@@ -180,7 +178,6 @@ class StudentTrackOut(BaseModel):
     presence_state: str
     head_yaw: float
     head_pitch: float
-    gaze_direction: str
     zone_status: str
     events: List[ViolationEventOut] = Field(default_factory=list)
 
