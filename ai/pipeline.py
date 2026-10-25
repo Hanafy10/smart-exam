@@ -1,7 +1,7 @@
 """
 AI Pipeline Runner:
 Captures camera frames, runs multi-modal CV detection:
-- Person detection (YOLOv8) + Centroid tracking
+- Person detection (YOLOv8n) + Centroid tracking
 - MediaPipe Pose (Spine tilt & Desk boundary zones)
 - MediaPipe FaceMesh (Head yaw/pitch + Gaze ratios with personal baseline)
 - YOLOv8 Object detection (Mobile phone)
@@ -196,7 +196,6 @@ def run_pipeline(display_gui: bool = DISPLAY_GUI):
             # 3. Full-frame detections
             faces = face_detector.detect(frame)
             head_poses = head_pose_est.estimate(frame)
-            gazes = []
             objects = object_detector.detect(frame)
 
             # Spatial mapping: link head poses & gazes to the corresponding person
@@ -226,8 +225,6 @@ def run_pipeline(display_gui: bool = DISPLAY_GUI):
                         head_pose_ok = True
                         matched_hp_idx = best_idx
 
-                gaze_dir, gaze_h_ratio = None, None
-
                 faces_here = [
                     f for f in faces
                     if bx1 <= (f["bbox"][0] + f["bbox"][2]) / 2 <= bx2
@@ -240,7 +237,7 @@ def run_pipeline(display_gui: bool = DISPLAY_GUI):
                 elif not head_pose_ok and len(faces_here) > 0:
                     scoring_engine.report_detection_failure(tid)
 
-                scoring_engine.update_head_pose(tid, yaw, pitch, gaze_dir, gaze_h_ratio)
+                scoring_engine.update_head_pose(tid, yaw, pitch)
 
                 for obj in objects:
                     ox1, oy1, ox2, oy2 = obj["bbox"]
@@ -270,7 +267,6 @@ def run_pipeline(display_gui: bool = DISPLAY_GUI):
                             frame=frame,
                             head_yaw=yaw,
                             head_pitch=pitch,
-                            gaze_direction=gaze_dir or "Eyes Center",
                             zone_status=zone_status,
                             presence_state=record.presence_state.value,
                             current_score=record.score,
@@ -281,8 +277,6 @@ def run_pipeline(display_gui: bool = DISPLAY_GUI):
                     "track_id": tid,
                     "head_yaw": round(yaw, 1),
                     "head_pitch": round(pitch, 1),
-                    "gaze_direction": gaze_dir or "Eyes Center",
-                    "gaze_baseline_h": round(record.gaze_baseline_h, 3),
                     "zone_status": zone_status,
                     "score": round(record.score, 0),
                     "presence_state": record.presence_state.value,

@@ -55,7 +55,6 @@ class EventGenerator:
         frame=None,
         head_yaw: float = 0.0,
         head_pitch: float = 0.0,
-        gaze_direction: str = "Eyes Center",
         zone_status: str = "safe",
         presence_state: str = "present",
         current_score: Optional[float] = None,

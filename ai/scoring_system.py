@@ -63,8 +63,6 @@ class StudentRecord:
     # Continuously updated whenever the head is centered, so it adapts
     # to glasses, lighting, and individual eye shape without requiring
     # an explicit calibration step.
-    gaze_baseline_h: float = 0.5
-    gaze_baseline_samples: int = 0
 
     def is_suspicious(self, threshold: float) -> bool:
         return self.score > threshold
@@ -146,8 +144,6 @@ class StudentScoringEngine:
     # ────────────────────────────────────────────────────────────────────
 
     def update_head_pose(self, student_id: int, yaw: float, pitch: float,
-                         gaze_direction: str = None,
-                         gaze_horizontal_ratio: float = None,
                          yaw_threshold: float = 20.0,
                          pitch_down_threshold: float = -15.0):
         """
@@ -167,70 +163,6 @@ class StudentScoringEngine:
         record = self._get_or_create_record(student_id)
         now = time.time()
 
-        # ── Auto-calibrate personal gaze baseline when head is centered ────
-        if gaze_horizontal_ratio is not None and abs(yaw) < self.rules.gaze_baseline_yaw_threshold:
-            alpha = self.rules.gaze_baseline_smoothing
-            if record.gaze_baseline_samples == 0:
-                # First sample — initialize directly instead of blending with default 0.5
-                record.gaze_baseline_h = gaze_horizontal_ratio
-            else:
-                # Exponential moving average — slowly adapts to the student's natural center
-                record.gaze_baseline_h = (
-                    (1 - alpha) * record.gaze_baseline_h + alpha * gaze_horizontal_ratio
-                )
-            record.gaze_baseline_samples += 1
-
-        # ── Sideways detection ───────────────────────────────────────────
-        if abs(yaw) > yaw_threshold:
-            is_looking_right = yaw > 0
-            is_looking_left = yaw < 0
-
-            if gaze_direction is None:
-                # No gaze data available at all — use head yaw alone
-                gaze_confirms = True
-            elif gaze_horizontal_ratio is not None and record.gaze_baseline_samples > 0:
-                # Compare against THIS student's personal baseline, not a fixed 0.5
-                deviation = gaze_horizontal_ratio - record.gaze_baseline_h
-                if is_looking_right and deviation > self.rules.gaze_deviation_threshold:
-                    gaze_confirms = True
-                elif is_looking_left and deviation < -self.rules.gaze_deviation_threshold:
-                    gaze_confirms = True
-                else:
-                    gaze_confirms = False
-            else:
-                # Not calibrated yet — fall back to fixed label comparison
-                if is_looking_right and gaze_direction == "Eyes Right":
-                    gaze_confirms = True
-                elif is_looking_left and gaze_direction == "Eyes Left":
-                    gaze_confirms = True
-                else:
-                    gaze_confirms = False
-
-            if gaze_confirms:
-                last = record.last_sideways_timestamp
-                cooldown_passed = (last is None) or (
-                    (now - last) >= self.rules.looking_sideways_cooldown
-                )
-                if cooldown_passed:
-                    direction_label = "right" if is_looking_right else "left"
-                    self._add_event(
-                        record,
-                        f"looking_sideways_{direction_label}",
-                        self.rules.looking_sideways,
-                    )
-                    record.last_sideways_timestamp = now
-        else:
-            record.last_sideways_timestamp = None
-
-        # ── Looking down (sustained) ─────────────────────────────────────
-        if pitch < pitch_down_threshold:
-            if record.looking_down_since is None:
-                record.looking_down_since = now
-            elif (now - record.looking_down_since) >= self.rules.looking_down_duration_threshold:
-                self._add_event(record, "looking_down_sustained", self.rules.looking_down_sustained)
-                record.looking_down_since = now
-        else:
-            record.looking_down_since = None
 
     # ────────────────────────────────────────────────────────────────────
     # Detection Failure
