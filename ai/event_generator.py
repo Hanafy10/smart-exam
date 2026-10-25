@@ -81,7 +81,6 @@ class EventGenerator:
             "evidence_base64": evidence_b64,
             "head_yaw": head_yaw,
             "head_pitch": head_pitch,
-            "gaze_direction": gaze_direction,
             "zone_status": zone_status,
             "presence_state": presence_state,
             "current_score": current_score,

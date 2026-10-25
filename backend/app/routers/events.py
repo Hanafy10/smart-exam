@@ -72,7 +72,7 @@ async def ingest_ai_event(payload: AIEventCreate, db: AsyncSession = Depends(get
     student.zone_status = payload.zone_status or "safe"
     student.presence_state = payload.presence_state or "present"
     student.last_seen = now
-
+    student.image_path = evidence_filename or student.image_path
     event = ViolationEvent(
         exam_session_id=session.id,
         student_track_id=student.id,
@@ -100,6 +100,7 @@ async def ingest_ai_event(payload: AIEventCreate, db: AsyncSession = Depends(get
             "is_suspicious": student.is_suspicious,
             "evidence_url": evidence_url,
             "timestamp": now.strftime("%H:%M:%S"),
+            "image_path": student.image_path,
         },
     }
     await manager.broadcast(ws_payload)
