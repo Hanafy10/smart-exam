@@ -14,7 +14,7 @@ import {
 import { ExamRoom, RoomMonitoringSummary, ViolationEvent, StudentTrack } from '@/lib/types';
 import { useWebSocket } from '@/hooks/useWebSocket';
 import {
-  Eye,
+  ShieldCheck,
   Camera,
   AlertTriangle,
   Users,
@@ -55,7 +55,7 @@ export default function MonitoringPage() {
     recentEvents: wsEvents,
     examStatus,
     pauseReason,
-  } = useWebSocket(token && user?.assigned_room_id ? wsUrl : '');
+  } = useWebSocket(!authLoading && token && user?.role === 'invigilator' && user?.assigned_room_id ? wsUrl : '');
 
   // Guard: Invigilator Only
   useEffect(() => {
@@ -89,10 +89,10 @@ export default function MonitoringPage() {
   }, [user?.assigned_room_id]);
 
   useEffect(() => {
-    if (user && user.role === 'invigilator' && user.assigned_room_id) {
+    if (!authLoading && token && user && user.role === 'invigilator' && user.assigned_room_id) {
       loadRoomData();
     }
-  }, [user, loadRoomData]);
+  }, [authLoading, token, user, loadRoomData]);
 
   // Combine REST initial events with live WebSocket events without duplicates
   const allEvents = [...wsEvents, ...events].filter(
@@ -157,7 +157,7 @@ export default function MonitoringPage() {
       <header className="border-b border-slate-800 bg-slate-900/80 backdrop-blur-md px-6 py-3.5 flex flex-wrap items-center justify-between gap-4 sticky top-0 z-20">
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-600/20 text-indigo-400 border border-indigo-500/30">
-            <Eye className="h-5 w-5" />
+            <ShieldCheck className="h-5 w-5" />
           </div>
           <div>
             <div className="flex items-center gap-2">
@@ -282,11 +282,13 @@ export default function MonitoringPage() {
               {/* Authenticated MJPEG Feed */}
               <div className="relative aspect-video w-full rounded-xl overflow-hidden bg-slate-950 border border-slate-800 flex items-center justify-center">
                 {/* Image element with authenticated token query parameter */}
-                <img
-                  src={getVideoFeedUrl(token)}
-                  alt="Live Camera Feed"
-                  className="w-full h-full object-contain"
-                />
+                {token && (
+                  <img
+                    src={getVideoFeedUrl(token)}
+                    alt="Live Camera Feed"
+                    className="w-full h-full object-contain"
+                  />
+                )}
 
                 {/* Overlaid status badge */}
                 <div className="absolute top-3 left-3 bg-black/70 backdrop-blur-md px-3 py-1 rounded-lg border border-white/10 text-[11px] text-white flex items-center gap-2">
@@ -342,20 +344,18 @@ export default function MonitoringPage() {
                   {tracks.map((t) => (
                     <div
                       key={t.track_id}
-                      className={`rounded-xl border p-3 text-xs transition-all ${
-                        t.is_suspicious || t.score >= 10
-                          ? 'border-red-500/40 bg-red-500/10'
-                          : 'border-slate-800 bg-slate-800/40'
-                      }`}
+                      className={`rounded-xl border p-3 text-xs transition-all ${t.is_suspicious || t.score >= 10
+                        ? 'border-red-500/40 bg-red-500/10'
+                        : 'border-slate-800 bg-slate-800/40'
+                        }`}
                     >
                       <div className="flex items-center justify-between mb-2">
                         <span className="font-bold text-white">Student #{t.track_id}</span>
                         <span
-                          className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
-                            t.is_suspicious || t.score >= 10
-                              ? 'bg-red-500/20 text-red-400 border border-red-500/30'
-                              : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
-                          }`}
+                          className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${t.is_suspicious || t.score >= 10
+                            ? 'bg-red-500/20 text-red-400 border border-red-500/30'
+                            : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                            }`}
                         >
                           Score: {t.score.toFixed(1)}
                         </span>
@@ -363,11 +363,7 @@ export default function MonitoringPage() {
 
                       <div className="space-y-1 text-[11px] text-slate-400">
                         <div className="flex justify-between">
-                          <span>Gaze:</span>
-                          <span className="text-slate-200">{t.gaze_direction}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span>Head Yaw / Pitch:</span>
+                          <span>  Head Yaw / Pitch:</span>
                           <span className="text-slate-200">{t.head_yaw.toFixed(1)}° / {t.head_pitch.toFixed(1)}°</span>
                         </div>
                         <div className="flex justify-between">

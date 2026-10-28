@@ -1,4 +1,26 @@
 services:
+  db:
+    image: mysql:8.0
+    container_name: smart_exam_db
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD:-SmartExamRoot123}
+      - MYSQL_DATABASE=${MYSQL_DATABASE:-smart_exam}
+      - MYSQL_USER=${MYSQL_USER:-smart_exam_user}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD:-SmartExam123}
+    ports:
+      - "${MYSQL_PORT:-3306}:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD:-SmartExamRoot123}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
   backend:
     build:
       context: .
@@ -18,10 +40,10 @@ services:
       - RATE_LIMIT_REQUESTS=${RATE_LIMIT_REQUESTS:-10}
       - RATE_LIMIT_WINDOW_MINUTES=${RATE_LIMIT_WINDOW_MINUTES:-1}
       - CORS_ORIGINS=${CORS_ORIGINS:-*}
-      - DATABASE_URL=${DOCKER_DATABASE_URL:-sqlite+aiosqlite:////data/smart_exam.db}
+      - DATABASE_URL=${DOCKER_DATABASE_URL:-mysql+aiomysql://smart_exam_user:SmartExam123@db:3306/smart_exam}
       - EVIDENCE_DIR=${DOCKER_EVIDENCE_DIR:-/app/evidence}
       - DEFAULT_ADMIN_USERNAME=${DEFAULT_ADMIN_USERNAME:-admin}
-      - DEFAULT_ADMIN_EMAIL=${DEFAULT_ADMIN_EMAIL:-admin@smartexam.edu}
+      - DEFAULT_ADMIN_EMAIL=${DEFAULT_ADMIN_EMAIL:-[EMAIL_ADDRESS]}
       - DEFAULT_ADMIN_PASSWORD=${DEFAULT_ADMIN_PASSWORD:-Admin@12345678}
       - DEFAULT_ROOM_NAME=${DEFAULT_ROOM_NAME:-Hall 101}
       - DEFAULT_ROOM_BUILDING=${DEFAULT_ROOM_BUILDING:-Engineering Complex A}
@@ -32,11 +54,13 @@ services:
       - ROBOT_OFFLINE_TIMEOUT=${ROBOT_OFFLINE_TIMEOUT:-90}
     volumes:
       - ./evidence:/app/evidence
-      - db_data:/data
+    depends_on:
+      db:
+        condition: service_healthy
     restart: unless-stopped
 
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      test: [ "CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')" ]
       interval: 10s
       timeout: 5s
       retries: 3
@@ -95,8 +119,8 @@ services:
     volumes:
       - ./evidence:/app/evidence
     restart: unless-stopped
-    devices:
-      - /dev/video0:/dev/video0
+    # devices:
+    #   - /dev/video0:/dev/video0
 
 volumes:
   db_data:

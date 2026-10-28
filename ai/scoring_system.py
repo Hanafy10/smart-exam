@@ -29,18 +29,8 @@ class ScoringRules:
     temporarily_missing_threshold: float = 10.0
     warning_missing_threshold: float = 30.0
 
-    # ── Personal gaze calibration settings ────────────────────────────
-    # Head must be within +/- this many degrees of center to count as
-    # a valid "centered" sample for updating the personal gaze baseline.
-    gaze_baseline_yaw_threshold: float = 8.0
-
-    # How fast the rolling baseline adapts to new centered samples.
-    # Lower = slower/more stable, higher = adapts faster but noisier.
-    gaze_baseline_smoothing: float = 0.05
-
-    # How far the current gaze ratio must deviate from the student's
-    # OWN calibrated baseline to count as "looking away" in that direction.
-    gaze_deviation_threshold: float = 0.12
+    head_turned_violation: int = 3
+    head_turned_cooldown: float = 3.0
 
 
 @dataclass
@@ -50,16 +40,10 @@ class StudentRecord:
     score: float = 0.0
     presence_state: PresenceState = PresenceState.PRESENT
     last_seen_timestamp: float = field(default_factory=time.time)
-    looking_down_since: float = None
     last_sideways_timestamp: float = None
     last_failure_timestamp: float = None
     # Each entry: (timestamp, event_name, points, evidence_path)
     event_log: list = field(default_factory=list)
-
-    # ── Personal gaze baseline (auto-calibrated) ──────────────────────
-    # Continuously updated whenever the head is centered, so it adapts
-    # to glasses, lighting, and individual eye shape without requiring
-    # an explicit calibration step.
 
     def is_suspicious(self, threshold: float) -> bool:
         return self.score > threshold
@@ -73,17 +57,10 @@ class StudentScoringEngine:
     State Machine:
         Present -> Temporarily Missing (0-10s) -> Warning Missing (10-30s) -> Exited (>30s)
 
-    Sideways detection logic:
-        Violation is confirmed when head yaw exceeds a threshold AND the
-        eye gaze deviates from the student's OWN personal baseline in the
-        same direction. The baseline is continuously auto-calibrated
-        whenever the head is roughly centered, so no explicit calibration
-        step is required and it adapts over time (lighting changes, glasses
-        glare, posture shifts, etc).
-
-        If gaze ratio data is not available, falls back to head-only
-        detection. If the baseline has not been established yet, falls back
-        to the fixed "Eyes Left"/"Eyes Right" label comparison.
+    Head Pose tracking logic:
+        Monitors head yaw and pitch. When head yaw exceeds the allowable
+        threshold (|yaw| > 25°), a sideways head-turned violation is recorded
+        with a cooldown period.
 
     Detection failure logic:
         When the head pose estimator fails to detect a pose while a face
@@ -137,28 +114,24 @@ class StudentScoringEngine:
         return record
 
     # ────────────────────────────────────────────────────────────────────
-    # Head Pose + Eye Gaze (combined, with personal gaze calibration)
+    # Head Pose Tracking
     # ────────────────────────────────────────────────────────────────────
 
     def update_head_pose(self, student_id: int, yaw: float, pitch: float,
-                         yaw_threshold: float = 20.0,
-                         pitch_down_threshold: float = -15.0):
+                         yaw_threshold: float = 25.0):
         """
-        Call once per frame with the student's head yaw/pitch and (optionally)
-        eye gaze info from EyeGazeEstimator.
-
-        gaze_horizontal_ratio: raw horizontal_ratio value from EyeGazeEstimator
-        (0.0-1.0). Used to auto-calibrate a personal baseline whenever the head
-        is roughly centered (within gaze_baseline_yaw_threshold degrees), and
-        to detect deviation from that baseline when checking for sideways looks.
-
-        Looking down logic:
-            - Pitch must be below pitch_down_threshold continuously
-            - Points added only after looking_down_duration_threshold seconds
-            - Re-triggers every N seconds if sustained
+        Call once per frame with the student's head yaw and pitch.
+        Triggers a head_turned violation if yaw exceeds threshold.
         """
         record = self._get_or_create_record(student_id)
         now = time.time()
+
+        if abs(yaw) > yaw_threshold:
+            last = record.last_sideways_timestamp
+            cooldown = self.rules.head_turned_cooldown
+            if last is None or (now - last) >= cooldown:
+                self._add_event(record, "head_turned", self.rules.head_turned_violation)
+                record.last_sideways_timestamp = now
 
 
     # ────────────────────────────────────────────────────────────────────

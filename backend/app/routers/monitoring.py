@@ -212,7 +212,7 @@ async def video_feed(token: Optional[str] = Query(None)):
         media_type="multipart/x-mixed-replace; boundary=frame"
     )
 
-# Endpoints for AI pipeline to feed live data
+# Endpoint for AI pipeline to feed live video frames
 @router.post("/ai/frame", status_code=status.HTTP_200_OK)
 async def push_ai_frame(
     request: Request,
@@ -223,80 +223,3 @@ async def push_ai_frame(
     if body:
         _latest_frames[room_id] = body
     return {"ok": True, "room_id": room_id}
-
-@router.post("/ai/event", status_code=status.HTTP_201_CREATED)
-async def push_ai_event(
-    payload: AIEventCreate,
-    db: AsyncSession = Depends(get_db)
-):
-    """Endpoint for AI pipeline to record violation event and broadcast to assigned room WebSocket."""
-    # Ensure room exists
-    room = (await db.execute(select(ExamRoom).where(ExamRoom.id == payload.room_id))).scalars().first()
-    if not room:
-        raise HTTPException(status_code=400, detail=f"Exam room {payload.room_id} not found")
-
-    now = datetime.now(timezone.utc).replace(tzinfo=None)
-    evidence_filename = None
-
-    if payload.evidence_base64:
-        try:
-            ts_str = now.strftime("%Y%m%d_%H%M%S_%f")[:-3]
-            evidence_filename = f"room{payload.room_id}_{payload.event_type}_track{payload.track_id}_{ts_str}.jpg"
-            file_path = Path(EVIDENCE_DIR) / evidence_filename
-            with open(file_path, "wb") as f:
-                f.write(base64.b64decode(payload.evidence_base64))
-        except Exception as e:
-            pass
-
-    event = ViolationEvent(
-        room_id=payload.room_id,
-        camera_id=payload.camera_id,
-        track_id=payload.track_id,
-        event_type=payload.event_type,
-        points=payload.points,
-        severity=payload.severity or "medium",
-        is_violence=payload.is_violence or False,
-        evidence_path=evidence_filename,
-        timestamp=now
-    )
-    db.add(event)
-    await db.commit()
-    await db.refresh(event)
-
-    evidence_url = f"/api/events/evidence/{evidence_filename}" if evidence_filename else None
-    
-    # Broadcast strictly to room listeners
-    ws_payload = {
-        "type": "violation_event",
-        "data": {
-            "id": event.id,
-            "room_id": payload.room_id,
-            "track_id": payload.track_id,
-            "event_type": event.event_type,
-            "points": event.points,
-            "severity": event.severity,
-            "is_violence": event.is_violence,
-            "evidence_url": evidence_url,
-            "timestamp": now.strftime("%H:%M:%S"),
-        }
-    }
-    await manager.broadcast_to_room(payload.room_id, ws_payload)
-
-    return {"ok": True, "event_id": event.id}
-
-@router.post("/ai/sync")
-async def push_ai_sync(payload: AIStatusSync):
-    """AI pushes live tracking states (boxes, head yaw/pitch, gaze direction)."""
-    _latest_tracks[payload.room_id] = [t.model_dump() for t in payload.tracks]
-    
-    ws_payload = {
-        "type": "status_sync",
-        "data": {
-            "room_id": payload.room_id,
-            "live_student_count": payload.live_student_count,
-            "fps": payload.fps,
-            "tracks": _latest_tracks[payload.room_id]
-        }
-    }
-    await manager.broadcast_to_room(payload.room_id, ws_payload)
-    return {"ok": True}

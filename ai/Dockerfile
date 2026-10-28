@@ -24,8 +24,9 @@ RUN pip install --no-cache-dir --index-url https://download.pytorch.org/whl/cpu 
 
 RUN pip install --no-cache-dir -r /app/ai/requirements.txt
 
-# Copy AI application
+# Copy AI application and YOLO weights into WORKDIR (/app)
 
+COPY yolov8n.pt /app/yolov8n.pt
 COPY ai /app/ai
 
 CMD ["python", "-m", "ai.pipeline"]

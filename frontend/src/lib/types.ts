@@ -74,8 +74,6 @@ export interface StudentTrack {
   presence_state: string;
   head_yaw: number;
   head_pitch: number;
-  gaze_direction: string;
-  gaze_baseline_h?: number;
   zone_status: string;
   events?: ViolationEvent[];
 }
@@ -84,8 +82,6 @@ export interface AITrackState {
   track_id: number;
   head_yaw: number;
   head_pitch: number;
-  gaze_direction: string;
-  gaze_baseline_h?: number;
   zone_status: string;
   score: number;
   presence_state: string;

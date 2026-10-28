@@ -3,7 +3,7 @@ AI Pipeline Runner:
 Captures camera frames, runs multi-modal CV detection:
 - Person detection (YOLOv8n) + Centroid tracking
 - MediaPipe Pose (Spine tilt & Desk boundary zones)
-- MediaPipe FaceMesh (Head yaw/pitch + Gaze ratios with personal baseline)
+- MediaPipe FaceMesh (Head yaw/pitch orientation)
 - YOLOv8 Object detection (Mobile phone)
 - Dispatches AI events to Backend FastAPI via EventGenerator
 """
@@ -32,12 +32,21 @@ private_ip = get_private_ip()
 
 _raw_cam = os.environ.get("CAMERA_INDEX", "0")
 CAMERA_INDEX = int(_raw_cam) if _raw_cam.isdigit() else _raw_cam
-BACKEND_URL = os.environ.get("BACKEND_URL", private_ip + ":8000")
+BACKEND_URL = os.environ.get("BACKEND_URL", f"http://{private_ip}:8000")
 ROOM_ID = int(os.environ.get("ROOM_ID", "1"))
 BRIGHTNESS_ALPHA = float(os.environ.get("BRIGHTNESS_ALPHA", "1.3"))
 BRIGHTNESS_BETA = int(os.environ.get("BRIGHTNESS_BETA", "20"))
 DISPLAY_GUI = os.environ.get("DISPLAY_GUI", "true").lower() == "true"
-YOLO_MODEL_PATH = os.environ.get("YOLO_MODEL_PATH", "yolov8n.pt")
+_raw_yolo_model = os.environ.get("YOLO_MODEL_PATH", "yolov8n.pt")
+if not Path(_raw_yolo_model).exists():
+    for _candidate in (
+        Path(__file__).resolve().parent / _raw_yolo_model,
+        ROOT_DIR / _raw_yolo_model,
+    ):
+        if _candidate.exists():
+            _raw_yolo_model = str(_candidate)
+            break
+YOLO_MODEL_PATH = _raw_yolo_model
 PERSON_CONFIDENCE_THRESHOLD = float(os.environ.get("PERSON_CONFIDENCE_THRESHOLD", "0.5"))
 OBJECT_CONFIDENCE_THRESHOLD = float(os.environ.get("OBJECT_CONFIDENCE_THRESHOLD", "0.4"))
 FACE_CONFIDENCE_THRESHOLD = float(os.environ.get("FACE_CONFIDENCE_THRESHOLD", "0.5"))
@@ -200,8 +209,7 @@ def run_pipeline(display_gui: bool = DISPLAY_GUI):
             head_poses = head_pose_est.estimate(frame)
             objects = object_detector.detect(frame)
 
-            # Spatial mapping: link head poses & gazes to the corresponding person
-            # Fixes the multi-student gaze assignment bug identified in situation.md
+            # Spatial mapping: link head poses to the corresponding person
             track_sync_list = []
 
             for p in people_with_pose:
@@ -259,9 +267,19 @@ def run_pipeline(display_gui: bool = DISPLAY_GUI):
                 # Check if new violation was logged -> send to backend via EventGenerator
                 record = scoring_engine.get_record(tid)
                 last_n = last_event_counts.get(tid, 0)
+                frame_event_types = set()
+                if head_pose_ok and abs(yaw) > 25.0:
+                    frame_event_types.add("head_turned")
+                if not head_pose_ok and len(faces_here) > 0:
+                    frame_event_types.add("detection_lost")
+
                 if len(record.event_log) > last_n:
                     new_events = record.event_log[last_n:]
+                    base_score = record.score - sum(pts for _, _, pts, _ in new_events)
                     for ts, evt, pts, _ in new_events:
+                        frame_event_types.add(evt)
+                        if not event_gen.is_violation_active(tid, evt):
+                            base_score += pts
                         event_gen.send_violation(
                             track_id=tid,
                             event_type=evt,
@@ -271,9 +289,13 @@ def run_pipeline(display_gui: bool = DISPLAY_GUI):
                             head_pitch=pitch,
                             zone_status=zone_status,
                             presence_state=record.presence_state.value,
-                            current_score=record.score,
+                            current_score=base_score,
                         )
+                    record.score = base_score
                     last_event_counts[tid] = len(record.event_log)
+
+                if p["pose"] is not None:
+                    event_gen.record_frame_violations(tid, frame_event_types)
 
                 track_sync_list.append({
                     "track_id": tid,

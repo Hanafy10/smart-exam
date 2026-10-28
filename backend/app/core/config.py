@@ -30,7 +30,10 @@ CORS_ORIGINS = [
 ]
 
 # Database & Storage
-DATABASE_URL = os.environ.get("DATABASE_URL", f"sqlite+aiosqlite:///{ROOT_DIR / 'smart_exam.db'}")
+DATABASE_URL = os.environ.get(
+    "DATABASE_URL",
+    "mysql+aiomysql://smart_exam_user:SmartExam@123@localhost:3306/smart_exam",
+)
 EVIDENCE_DIR = os.environ.get("EVIDENCE_DIR", str(ROOT_DIR / "evidence"))
 os.makedirs(EVIDENCE_DIR, exist_ok=True)
 

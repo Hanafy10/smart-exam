@@ -10,17 +10,63 @@ function getRuntimeApiBase(): string {
 const API_BASE = getRuntimeApiBase();
 
 let refreshHandler: (() => Promise<string | null>) | null = null;
+let refreshInFlight: Promise<string | null> | null = null;
 
 export function registerAuthRefresh(handler: () => Promise<string | null>) {
   refreshHandler = handler;
 }
 
+export function isTokenExpired(token?: string | null, bufferSeconds = 10): boolean {
+  if (!token) return true;
+  try {
+    const parts = token.split('.');
+    if (parts.length !== 3) return true;
+    const base64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+    const padded = base64.padEnd(base64.length + ((4 - (base64.length % 4)) % 4), '=');
+    const payload = JSON.parse(atob(padded));
+    if (typeof payload.exp !== 'number') return true;
+    return payload.exp * 1000 <= Date.now() + bufferSeconds * 1000;
+  } catch {
+    return true;
+  }
+}
+
+export function getTokenRemainingMs(token?: string | null): number {
+  if (!token) return 0;
+  try {
+    const parts = token.split('.');
+    if (parts.length !== 3) return 0;
+    const base64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+    const padded = base64.padEnd(base64.length + ((4 - (base64.length % 4)) % 4), '=');
+    const payload = JSON.parse(atob(padded));
+    if (typeof payload.exp !== 'number') return 0;
+    return Math.max(0, payload.exp * 1000 - Date.now());
+  } catch {
+    return 0;
+  }
+}
+
+export async function triggerTokenRefresh(): Promise<string | null> {
+  if (!refreshHandler) return null;
+  if (!refreshInFlight) {
+    refreshInFlight = refreshHandler().finally(() => {
+      refreshInFlight = null;
+    });
+  }
+  return refreshInFlight;
+}
+
 export async function apiRequest(endpoint: string, options: RequestInit = {}) {
-  const token = typeof window !== 'undefined' ? localStorage.getItem('smartexam_token') : null;
   const headers = new Headers(options.headers || {});
 
-  if (token && !headers.has('Authorization')) {
-    headers.set('Authorization', `Bearer ${token}`);
+  if (!headers.has('Authorization') && typeof window !== 'undefined') {
+    let token = localStorage.getItem('smartexam_token');
+    if (token && isTokenExpired(token)) {
+      token = await triggerTokenRefresh();
+    }
+    if (token) {
+      headers.set('Authorization', `Bearer ${token}`);
+    }
   }
 
   if (!headers.has('Content-Type') && !(options.body instanceof FormData)) {
@@ -33,7 +79,7 @@ export async function apiRequest(endpoint: string, options: RequestInit = {}) {
   });
 
   if (response.status === 401 && refreshHandler) {
-    const newToken = await refreshHandler();
+    const newToken = await triggerTokenRefresh();
     if (newToken) {
       headers.set('Authorization', `Bearer ${newToken}`);
       response = await fetch(`${API_BASE}${endpoint}`, {
@@ -189,7 +235,7 @@ export function getVideoFeedUrl(token?: string | null): string {
 }
 
 export function getMonitoringWsUrl(token?: string | null): string {
-  if (!token) return '';
+  if (!token || isTokenExpired(token, 0)) return '';
   if (typeof window !== 'undefined') {
     const wsBase = API_BASE.replace(/^http/, 'ws').replace(/\/$/, '');
     return `${wsBase}/ws/monitoring?token=${encodeURIComponent(token)}`;

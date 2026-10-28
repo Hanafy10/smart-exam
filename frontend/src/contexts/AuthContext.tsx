@@ -6,6 +6,9 @@ import {
   getCurrentUser,
   refreshToken as apiRefreshToken,
   registerAuthRefresh,
+  isTokenExpired,
+  getTokenRemainingMs,
+  triggerTokenRefresh,
 } from '@/lib/api';
 
 interface AuthContextType {
@@ -37,7 +40,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const handleTokenRefresh = useCallback(async (): Promise<string | null> => {
     const currentRefresh = typeof window !== 'undefined' ? localStorage.getItem('smartexam_refresh_token') : null;
-    if (!currentRefresh) {
+    if (!currentRefresh || isTokenExpired(currentRefresh, 0)) {
       logout();
       return null;
     }
@@ -59,31 +62,75 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [handleTokenRefresh]);
 
   useEffect(() => {
-    const storedToken = localStorage.getItem('smartexam_token');
-    const storedRefresh = localStorage.getItem('smartexam_refresh_token');
-    const storedUser = localStorage.getItem('smartexam_user');
+    let cancelled = false;
 
-    if (storedToken && storedUser) {
-      setToken(storedToken);
-      setRefreshTokenStr(storedRefresh);
-      try {
-        setUser(JSON.parse(storedUser));
-      } catch {
-        logout();
+    async function initAuth() {
+      registerAuthRefresh(handleTokenRefresh);
+      const storedToken = localStorage.getItem('smartexam_token');
+      const storedRefresh = localStorage.getItem('smartexam_refresh_token');
+      const storedUser = localStorage.getItem('smartexam_user');
+
+      if (storedToken && storedUser) {
+        try {
+          const parsedUser: User = JSON.parse(storedUser);
+          if (!isTokenExpired(storedToken)) {
+            if (!cancelled) {
+              setToken(storedToken);
+              setRefreshTokenStr(storedRefresh);
+              setUser(parsedUser);
+            }
+          } else if (storedRefresh && !isTokenExpired(storedRefresh, 0)) {
+            const refreshedToken = await triggerTokenRefresh();
+            if (!cancelled && refreshedToken) {
+              setUser(parsedUser);
+            }
+          } else {
+            if (!cancelled) {
+              logout();
+            }
+          }
+        } catch {
+          if (!cancelled) {
+            logout();
+          }
+        }
+      } else if (storedToken || storedRefresh || storedUser) {
+        if (!cancelled) {
+          logout();
+        }
+      }
+
+      if (!cancelled) {
+        setLoading(false);
       }
     }
-    setLoading(false);
-  }, [logout]);
+
+    initAuth();
+    return () => {
+      cancelled = true;
+    };
+  }, [handleTokenRefresh, logout]);
+
+  useEffect(() => {
+    if (!token) return;
+    const remainingMs = getTokenRemainingMs(token);
+    if (remainingMs <= 0) return;
+    const refreshDelay = Math.max(5000, remainingMs - 60000);
+    const timer = setTimeout(() => {
+      triggerTokenRefresh();
+    }, refreshDelay);
+    return () => clearTimeout(timer);
+  }, [token]);
 
   const login = async (username: string, password: string): Promise<User> => {
     const data = await apiLogin(username, password);
-    const userData = await getCurrentUser(data.access_token);
-    setToken(data.access_token);
-    setRefreshTokenStr(data.refresh_token);
-    setUser(userData);
-
     localStorage.setItem('smartexam_token', data.access_token);
     localStorage.setItem('smartexam_refresh_token', data.refresh_token);
+    setToken(data.access_token);
+    setRefreshTokenStr(data.refresh_token);
+
+    const userData = await getCurrentUser(data.access_token);
+    setUser(userData);
     localStorage.setItem('smartexam_user', JSON.stringify(userData));
     return userData;
   };

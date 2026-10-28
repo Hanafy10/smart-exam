@@ -107,7 +107,6 @@ async def list_students(db: AsyncSession = Depends(get_db)):
                 presence_state=s.presence_state,
                 head_yaw=s.head_yaw,
                 head_pitch=s.head_pitch,
-                gaze_direction=s.gaze_direction,
                 zone_status=s.zone_status,
                 events=ev_out,
             )
