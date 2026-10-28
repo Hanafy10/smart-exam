@@ -15,6 +15,3 @@ def get_private_ip():
     finally:
         s.close()
     return private_ip
-
-if __name__ == "__main__":
-    print(f"Your Private IP Address is: {get_private_ip()}")

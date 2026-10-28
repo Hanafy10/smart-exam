@@ -12,7 +12,6 @@ from pathlib import Path
 import time
 import cv2
 import numpy as np
-
 ROOT_DIR = Path(__file__).resolve().parent.parent
 try:
     from dotenv import load_dotenv
@@ -27,10 +26,13 @@ from ai.boundary_zones import DeskZoneManager, BoundaryZoneAnalyzer, ZoneThresho
 from ai.object_detector import ObjectDetector
 from ai.scoring_system import StudentScoringEngine, ScoringRules
 from ai.event_generator import EventGenerator
+from ai.helper.find_ip import get_private_ip    
+
+private_ip = get_private_ip()
 
 _raw_cam = os.environ.get("CAMERA_INDEX", "0")
 CAMERA_INDEX = int(_raw_cam) if _raw_cam.isdigit() else _raw_cam
-BACKEND_URL = os.environ.get("BACKEND_URL", "http://192.168.1.9:8000")
+BACKEND_URL = os.environ.get("BACKEND_URL", private_ip + ":8000")
 ROOM_ID = int(os.environ.get("ROOM_ID", "1"))
 BRIGHTNESS_ALPHA = float(os.environ.get("BRIGHTNESS_ALPHA", "1.3"))
 BRIGHTNESS_BETA = int(os.environ.get("BRIGHTNESS_BETA", "20"))

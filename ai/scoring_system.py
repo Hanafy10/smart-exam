@@ -16,8 +16,7 @@ class ScoringRules:
     Point values for each violation type.
     Calibrate these based on real exam footage.
     """
-    looking_sideways: int = 1
-    looking_down_sustained: int = 2
+
     mobile_detected: int = 5
     another_face_detected: int = 5
     leaning_violation: int = 4
@@ -26,8 +25,6 @@ class ScoringRules:
     suspicious_score_threshold: int = 10
 
     # Timing thresholds (seconds)
-    looking_down_duration_threshold: float = 5.0
-    looking_sideways_cooldown: float = 3.0
     detection_failure_cooldown: float = 3.0
     temporarily_missing_threshold: float = 10.0
     warning_missing_threshold: float = 30.0

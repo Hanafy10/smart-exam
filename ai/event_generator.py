@@ -5,7 +5,7 @@ import base64
 import requests
 import cv2
 from typing import Optional
-
+from ai.helper.find_ip import get_private_ip
 ROOT_DIR = Path(__file__).resolve().parent.parent
 try:
     from dotenv import load_dotenv
@@ -13,6 +13,7 @@ try:
 except ImportError:
     pass
 
+private_ip = get_private_ip()
 
 class EventGenerator:
     """
@@ -20,7 +21,7 @@ class EventGenerator:
     from the AI Pipeline to the Backend FastAPI server via room-scoped HTTP POST endpoints.
     """
     def __init__(self, backend_url: Optional[str] = None, room_id: Optional[int] = None):
-        resolved_url = backend_url or os.environ.get("BACKEND_URL", "http://192.168.1.9:8000")
+        resolved_url = backend_url or os.environ.get("BACKEND_URL", f"http://{private_ip}:8000")
         self.backend_url = resolved_url.rstrip("/")
         self.room_id = room_id if room_id is not None else int(os.environ.get("ROOM_ID", "1"))
         self.events_endpoint = f"{self.backend_url}/api/monitoring/ai/event"

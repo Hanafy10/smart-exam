@@ -10,7 +10,7 @@ try:
 except ImportError:
     pass
 
-_raw_camera_index = os.environ.get("CAMERA_INDEX", "192.168.1.8:4747/video")
+_raw_camera_index = os.environ.get("CAMERA_INDEX", "192.168.1.7:4747/video")
 CAMERA_INDEX: Union[int, str] = int(_raw_camera_index) if _raw_camera_index.isdigit() else _raw_camera_index
 CAMERA_WIDTH = int(os.environ.get("CAMERA_WIDTH", "1280"))
 CAMERA_HEIGHT = int(os.environ.get("CAMERA_HEIGHT", "720"))
@@ -36,7 +36,7 @@ class CameraCapture:
     def start(self):
         """Open the camera and configure resolution + FPS."""
         #self.cap = cv2.VideoCapture(self.camera_index)
-        self.cap = cv2.VideoCapture("http://192.168.1.8:4747/video")
+        self.cap = cv2.VideoCapture("http://192.168.1.7:4747/video")
 
         if not self.cap.isOpened():
             self.cap.release()
