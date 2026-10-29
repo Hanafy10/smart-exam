@@ -32,7 +32,6 @@ venv/
 
 # =========================
 
-
 !.env.example
 !.env.sample
 
@@ -191,3 +190,5 @@ frontend/yarn-debug.log*
 frontend/pnpm-debug.log*
 frontend/*.log
 
+# always changing
+camera_capture.py
