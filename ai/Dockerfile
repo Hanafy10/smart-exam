@@ -18,12 +18,22 @@ COPY ai/requirements.txt /app/ai/requirements.txt
 
 # Install CPU-only PyTorch (avoids CUDA libraries)
 
-RUN pip install --no-cache-dir --index-url https://download.pytorch.org/whl/cpu torch==2.4.1 torchvision==0.19.1
+
+# Install CPU-only PyTorch with longer timeouts and retries
+RUN pip install \
+    --no-cache-dir \
+    --default-timeout=300 \
+    --retries=10 \
+    --index-url https://download.pytorch.org/whl/cu121 \
+    torch==2.4.1 torchvision==0.19.1
 
 # Install remaining AI dependencies
 
-RUN pip install --no-cache-dir -r /app/ai/requirements.txt
-
+RUN pip install \
+    --no-cache-dir \
+    --default-timeout=300 \
+    --retries=10 \
+    -r /app/ai/requirements.txt
 # Copy AI application and YOLO weights into WORKDIR (/app)
 
 COPY yolov8n.pt /app/yolov8n.pt

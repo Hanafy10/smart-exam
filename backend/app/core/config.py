@@ -34,7 +34,11 @@ DATABASE_URL = os.environ.get(
     "DATABASE_URL",
     "mysql+aiomysql://smart_exam_user:SmartExam@123@localhost:3306/smart_exam",
 )
-EVIDENCE_DIR = os.environ.get("EVIDENCE_DIR", str(ROOT_DIR / "evidence"))
+_raw_evidence_dir = os.environ.get("EVIDENCE_DIR", str(ROOT_DIR / "evidence"))
+_evidence_path = Path(_raw_evidence_dir)
+if not _evidence_path.is_absolute():
+    _evidence_path = (ROOT_DIR / _evidence_path).resolve()
+EVIDENCE_DIR = str(_evidence_path)
 os.makedirs(EVIDENCE_DIR, exist_ok=True)
 
 # Default Seed Data

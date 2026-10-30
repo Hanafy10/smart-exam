@@ -7,6 +7,7 @@ import {
   getMyRoomSummary,
   getMyRoomEvents,
   getVideoFeedUrl,
+  getEvidenceUrl,
   getMonitoringWsUrl,
   pauseExam,
   resumeExam,
@@ -419,7 +420,7 @@ export default function MonitoringPage() {
 
                     {ev.evidence_url && (
                       <button
-                        onClick={() => setSelectedEvidence(ev.evidence_url || null)}
+                        onClick={() => setSelectedEvidence(getEvidenceUrl(ev.evidence_url) || null)}
                         className="w-full flex items-center justify-center gap-1.5 rounded-lg border border-slate-800 bg-slate-900 py-1.5 text-[11px] font-medium text-slate-300 hover:text-white hover:bg-slate-800 transition-all cursor-pointer"
                       >
                         <ImageIcon className="h-3 w-3 text-indigo-400" />
@@ -449,7 +450,7 @@ export default function MonitoringPage() {
             </div>
             <div className="rounded-xl overflow-hidden bg-black border border-slate-800 aspect-video flex items-center justify-center">
               <img
-                src={selectedEvidence}
+                src={getEvidenceUrl(selectedEvidence)}
                 alt="Violation Evidence"
                 className="w-full h-full object-contain"
               />

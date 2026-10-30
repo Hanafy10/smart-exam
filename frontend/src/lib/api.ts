@@ -227,11 +227,28 @@ export async function getMyRoomEvents(limit = 50): Promise<ViolationEvent[]> {
 }
 
 export function getVideoFeedUrl(token?: string | null): string {
-  const base = API_BASE;
+  const base = getRuntimeApiBase();
 
   if (!token) return `${base}/api/monitoring/video-feed`;
 
   return `${base}/api/monitoring/video-feed?token=${encodeURIComponent(token)}`;
+}
+
+export function getEvidenceUrl(evidenceUrl?: string | null): string {
+  if (!evidenceUrl) return '';
+  const trimmed = evidenceUrl.trim();
+  if (!trimmed) return '';
+  if (/^(https?:|data:|blob:)/i.test(trimmed)) {
+    return trimmed;
+  }
+  const base = getRuntimeApiBase().replace(/\/$/, '');
+  if (trimmed.startsWith('/')) {
+    return `${base}${trimmed}`;
+  }
+  if (trimmed.startsWith('api/') || trimmed.startsWith('evidence/')) {
+    return `${base}/${trimmed}`;
+  }
+  return `${base}/api/events/evidence/${encodeURIComponent(trimmed)}`;
 }
 
 export function getMonitoringWsUrl(token?: string | null): string {

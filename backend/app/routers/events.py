@@ -241,7 +241,7 @@ async def get_recent_events(limit: int = 50, db: AsyncSession = Depends(get_db))
     results = (await db.execute(query)).scalars().all()
     events_out = []
     for ev in results:
-        ev_url = f"/api/events/evidence/{ev.evidence_path}" if ev.evidence_path else None
+        ev_url = f"/api/events/evidence/{Path(ev.evidence_path).name}" if ev.evidence_path else None
         events_out.append(
             ViolationEventOut(
                 id=ev.id,
@@ -261,7 +261,8 @@ async def get_recent_events(limit: int = 50, db: AsyncSession = Depends(get_db))
 
 @router.get("/evidence/{filename}")
 async def get_evidence_image(filename: str):
-    file_path = Path(EVIDENCE_DIR) / filename
+    safe_name = Path(filename).name
+    file_path = Path(EVIDENCE_DIR) / safe_name
     if not file_path.exists():
         raise HTTPException(status_code=404, detail="Evidence image not found")
     return FileResponse(path=file_path, media_type="image/jpeg")

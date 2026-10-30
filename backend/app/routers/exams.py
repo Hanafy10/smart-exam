@@ -1,4 +1,5 @@
 from datetime import datetime, timezone
+from pathlib import Path
 from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
@@ -86,7 +87,7 @@ async def list_students(db: AsyncSession = Depends(get_db)):
     for s in students:
         ev_out = []
         for ev in s.events[-20:]:
-            ev_url = f"/api/events/evidence/{ev.evidence_path}" if ev.evidence_path else None
+            ev_url = f"/api/events/evidence/{Path(ev.evidence_path).name}" if ev.evidence_path else None
             ev_out.append(
                 ViolationEventOut(
                     id=ev.id,

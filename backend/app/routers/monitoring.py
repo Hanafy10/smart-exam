@@ -100,7 +100,7 @@ async def get_my_room_events(
     events = result.scalars().all()
     outs = []
     for ev in events:
-        evidence_url = f"/api/events/evidence/{ev.evidence_path}" if ev.evidence_path else None
+        evidence_url = f"/api/events/evidence/{Path(ev.evidence_path).name}" if ev.evidence_path else None
         outs.append(ViolationEventOut(
             id=ev.id,
             room_id=ev.room_id,

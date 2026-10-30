@@ -11,8 +11,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 COPY backend/requirements.txt /app/backend/requirements.txt
-RUN pip install --no-cache-dir -r /app/backend/requirements.txt greenlet
-
+RUN pip install --no-cache-dir --default-timeout=120 --retries=10 -r /app/backend/requirements.txt && \
+    pip install --no-cache-dir --default-timeout=120 --retries=10 greenlet
 COPY backend /app/backend
 
 EXPOSE 8000

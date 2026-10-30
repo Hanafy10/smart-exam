@@ -189,6 +189,3 @@ frontend/npm-debug.log*
 frontend/yarn-debug.log*
 frontend/pnpm-debug.log*
 frontend/*.log
-
-# always changing
-camera_capture.py

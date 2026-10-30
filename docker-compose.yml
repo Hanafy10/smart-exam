@@ -94,6 +94,7 @@ services:
       context: .
       dockerfile: ai/Dockerfile
     container_name: smart_exam_ai
+#    gpus: all
     env_file:
       - .env
     environment:
@@ -121,6 +122,7 @@ services:
     restart: unless-stopped
     # devices:
     #   - /dev/video0:/dev/video0
+
 
 volumes:
   db_data:
